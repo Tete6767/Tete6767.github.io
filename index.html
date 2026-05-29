@@ -7,791 +7,419 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Noto+Sans+Thai:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
 :root {
-  --cream: #fdf8f2;
-  --warm: #f5ead8;
-  --rose: #e8a0a0;
-  --blush: #f2c4b8;
-  --sakura: #ffb7c5;
-  --gold: #c9965a;
-  --ink: #1a1410;
-  --ink2: #2d2118;
-  --brown: #6b4c35;
-  --muted: #9a8070;
-  --accent: #d4506a;
-  --sky: #7fb3d3;
-  --piano: #e8ddd0;
+  --cream:#fdf8f2; --warm:#f5ead8; --rose:#e8a0a0;
+  --blush:#f2c4b8; --sakura:#ffb7c5; --gold:#c9965a;
+  --ink:#1a1410; --ink2:#2d2118; --brown:#6b4c35;
+  --muted:#9a8070; --accent:#d4506a; --sky:#7fb3d3;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--cream);color:var(--ink);font-family:'Cormorant Garamond',serif;overflow-x:hidden;cursor:none;}
+
+/* CURSOR */
+#cursor{width:14px;height:14px;border:1.5px solid var(--accent);border-radius:50%;position:fixed;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .2s,height .2s,background .2s;mix-blend-mode:multiply;}
+#cursor-trail{width:6px;height:6px;background:var(--sakura);border-radius:50%;position:fixed;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:left .08s,top .08s;opacity:.6;}
+
+/* FLOATING NOTES */
+.note{position:fixed;font-size:1.2rem;pointer-events:none;z-index:1;animation:floatNote linear infinite;opacity:0;color:var(--gold);}
+@keyframes floatNote{0%{transform:translateY(100vh) rotate(0deg);opacity:0;}10%{opacity:.35;}90%{opacity:.2;}100%{transform:translateY(-20vh) rotate(360deg);opacity:0;}}
+
+/* SAKURA PETALS */
+.petal{position:fixed;width:10px;height:13px;background:linear-gradient(135deg,#ffccd5,#ffb7c5);border-radius:50% 0 50% 0;pointer-events:none;animation:petalFall linear infinite;opacity:0;z-index:1;}
+@keyframes petalFall{0%{transform:translateY(-5%) translateX(0) rotate(0deg);opacity:0;}10%{opacity:.7;}85%{opacity:.4;}100%{transform:translateY(105vh) translateX(80px) rotate(720deg);opacity:0;}}
+
+/* ── MUSIC PLAYER ── */
+#music-player{
+  position:fixed;bottom:24px;left:24px;z-index:500;
+  background:rgba(26,20,16,.92);border:1px solid rgba(255,183,197,.2);
+  border-radius:16px;padding:16px 20px;backdrop-filter:blur(20px);
+  min-width:280px;max-width:320px;
+  box-shadow:0 20px 60px rgba(0,0,0,.5);
+  transition:transform .3s,opacity .3s;
+}
+#music-player.hidden{transform:translateY(120%);opacity:0;pointer-events:none;}
+.player-title{font-family:'Playfair Display',serif;font-style:italic;font-size:.82rem;color:var(--sakura);letter-spacing:.1em;margin-bottom:4px;}
+.player-song{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:#fdf8f2;margin-bottom:2px;}
+.player-artist{font-size:.75rem;color:var(--muted);margin-bottom:12px;}
+.player-controls{display:flex;align-items:center;gap:12px;}
+.btn-play{
+  width:40px;height:40px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),#c0395a);
+  border:none;color:#fff;font-size:1rem;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:transform .2s,box-shadow .2s;flex-shrink:0;
+}
+.btn-play:hover{transform:scale(1.1);box-shadow:0 4px 20px rgba(212,80,106,.4);}
+.player-progress-wrap{flex:1;cursor:pointer;}
+.player-progress-bg{height:3px;background:rgba(255,255,255,.1);border-radius:99px;position:relative;}
+.player-progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--sakura));border-radius:99px;width:0%;transition:width .3s linear;}
+.player-time{font-family:'Cormorant Garamond',serif;font-size:.7rem;color:var(--muted);margin-top:4px;display:flex;justify-content:space-between;}
+.player-viz{display:flex;align-items:flex-end;gap:2px;height:20px;margin-left:4px;}
+.pvbar{width:3px;background:rgba(255,183,197,.4);border-radius:2px;animation:pvAnim .5s ease-in-out infinite alternate;}
+.pvbar:nth-child(2){animation-delay:.1s;} .pvbar:nth-child(3){animation-delay:.2s;}
+.pvbar:nth-child(4){animation-delay:.15s;} .pvbar:nth-child(5){animation-delay:.05s;}
+@keyframes pvAnim{from{height:3px;}to{height:18px;}}
+.player-viz.paused .pvbar{animation-play-state:paused;}
+
+/* Load MP3 zone */
+.mp3-drop{
+  border:1px dashed rgba(255,183,197,.2);border-radius:8px;
+  padding:10px;text-align:center;cursor:pointer;
+  font-size:.72rem;color:var(--muted);margin-top:10px;
+  transition:all .2s;
+}
+.mp3-drop:hover{border-color:rgba(255,183,197,.5);color:var(--sakura);}
+.mp3-drop.loaded{border-color:rgba(52,211,153,.4);color:#34d399;}
+
+/* TOGGLE PLAYER BTN */
+#player-toggle{
+  position:fixed;bottom:24px;left:24px;z-index:501;
+  width:48px;height:48px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),#c0395a);
+  border:none;color:#fff;font-size:1.3rem;
+  cursor:pointer;display:none;align-items:center;justify-content:center;
+  box-shadow:0 4px 20px rgba(212,80,106,.4);
+  transition:transform .2s;
+}
+#player-toggle:hover{transform:scale(1.1);}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:20px 48px;transition:all .4s;}
+nav.scrolled{background:rgba(253,248,242,.94);backdrop-filter:blur(16px);padding:14px 48px;box-shadow:0 1px 0 rgba(107,76,53,.1);}
+.nav-logo{font-family:'Playfair Display',serif;font-size:.95rem;font-style:italic;color:var(--ink);}
+.nav-links{display:flex;gap:28px;}
+.nav-link{font-size:.88rem;color:var(--brown);text-decoration:none;letter-spacing:.08em;position:relative;transition:color .2s;cursor:pointer;}
+.nav-link::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:1px;background:var(--accent);transform:scaleX(0);transition:transform .3s;transform-origin:left;}
+.nav-link:hover{color:var(--accent);}
+.nav-link:hover::after{transform:scaleX(1);}
+
+/* HERO */
+#hero{min-height:100vh;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 60% 30%,rgba(255,183,197,.25) 0%,transparent 65%),radial-gradient(ellipse 50% 50% at 20% 80%,rgba(201,150,90,.12) 0%,transparent 55%),radial-gradient(ellipse 60% 40% at 80% 70%,rgba(127,179,211,.15) 0%,transparent 60%),var(--cream);}
+.staff-lines{position:absolute;inset:0;overflow:hidden;opacity:.06;}
+.staff-line{position:absolute;width:200%;height:1px;background:var(--brown);left:-50%;}
+.hero-content{position:relative;z-index:5;text-align:center;padding:40px 20px;animation:heroReveal 1.8s cubic-bezier(.2,1,.3,1) both;}
+@keyframes heroReveal{from{opacity:0;transform:translateY(40px);}to{opacity:1;transform:translateY(0);}}
+.hero-jp{font-family:'Playfair Display',serif;font-style:italic;font-size:clamp(.9rem,2vw,1.3rem);color:var(--muted);letter-spacing:.4em;margin-bottom:16px;animation:heroReveal 1.8s .2s both;}
+.hero-title{font-family:'Playfair Display',serif;font-size:clamp(3rem,9vw,7rem);font-weight:900;line-height:.95;color:var(--ink);}
+.hero-title em{font-style:italic;color:var(--accent);display:block;}
+.hero-sub{font-size:clamp(.95rem,2vw,1.2rem);color:var(--muted);margin-top:20px;font-style:italic;letter-spacing:.08em;animation:heroReveal 1.8s .5s both;}
+.hero-line{width:120px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:24px auto;animation:heroReveal 1.8s .4s both;}
+.hero-scroll{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--muted);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;animation:fadeUp 2s 1.5s both;cursor:pointer;}
+@keyframes fadeUp{from{opacity:0;transform:translateX(-50%) translateY(10px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+.scroll-arrow{width:18px;height:18px;border-right:1px solid var(--muted);border-bottom:1px solid var(--muted);transform:rotate(45deg);animation:bounce .9s ease-in-out infinite alternate;}
+@keyframes bounce{to{transform:rotate(45deg) translateY(5px);}}
+
+/* ── OPENING DIALOGUE ── */
+#opening-dialogue{
+  background:var(--ink);
+  padding:120px 40px;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+  max-width:100%;
+}
+#opening-dialogue::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 70% 60% at 50% 50%,rgba(255,183,197,.05) 0%,transparent 70%);
+}
+.dialogue-line1{
+  font-family:'Playfair Display',serif;
+  font-style:italic;
+  font-size:clamp(1.2rem,3vw,2rem);
+  color:rgba(253,248,242,.75);
+  letter-spacing:.06em;
+  line-height:2;
+  margin-bottom:8px;
+  position:relative;z-index:1;
+  opacity:0;
+  animation:dialogueIn 1.2s cubic-bezier(.2,1,.3,1) 0.3s forwards;
+}
+.dialogue-line2{
+  font-family:'Playfair Display',serif;
+  font-style:italic;
+  font-size:clamp(1.2rem,3vw,2rem);
+  color:var(--sakura);
+  letter-spacing:.06em;
+  line-height:2;
+  position:relative;z-index:1;
+  opacity:0;
+  animation:dialogueIn 1.2s cubic-bezier(.2,1,.3,1) 1.2s forwards;
+}
+.dialogue-dash{
+  font-family:'Cormorant Garamond',serif;
+  font-size:.78rem;color:var(--gold);
+  letter-spacing:.3em;text-transform:uppercase;
+  margin-top:24px;opacity:0;
+  animation:dialogueIn 1s 2.2s forwards;
+  position:relative;z-index:1;
+}
+@keyframes dialogueIn{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.dialogue-deco{
+  position:absolute;
+  font-family:'Playfair Display',serif;
+  font-size:16rem;font-weight:900;
+  color:rgba(255,255,255,.015);
+  pointer-events:none;
 }
 
-* { margin:0; padding:0; box-sizing:border-box; }
+/* QUOTE BAND */
+.quote-band{background:var(--ink);padding:80px 40px;text-align:center;position:relative;overflow:hidden;max-width:100%;}
+.quote-band::before{content:'"\u201d';position:absolute;font-family:'Playfair Display',serif;font-size:18rem;color:rgba(255,255,255,.025);top:-60px;left:20px;line-height:1;}
+.quote-text{font-family:'Playfair Display',serif;font-size:clamp(1.4rem,3vw,2.2rem);font-style:italic;color:var(--cream);max-width:800px;margin:0 auto 16px;line-height:1.6;position:relative;z-index:1;}
+.quote-src{font-family:'Cormorant Garamond',serif;font-size:.85rem;color:var(--gold);letter-spacing:.2em;text-transform:uppercase;}
 
-html { scroll-behavior: smooth; }
+/* STORY */
+section{padding:100px 40px;max-width:1200px;margin:0 auto;}
+.story-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;}
+.story-tag{font-family:'Cormorant Garamond',serif;font-size:.78rem;letter-spacing:.3em;text-transform:uppercase;color:var(--accent);margin-bottom:14px;}
+.section-title{font-family:'Playfair Display',serif;font-size:clamp(1.8rem,3.5vw,3rem);font-weight:700;line-height:1.15;margin-bottom:20px;color:var(--ink);}
+.section-title em{font-style:italic;color:var(--accent);}
+.body-text{font-size:1.05rem;color:var(--brown);line-height:2;font-weight:300;margin-bottom:16px;}
 
-body {
-  background: var(--cream);
-  color: var(--ink);
-  font-family: 'Cormorant Garamond', serif;
-  overflow-x: hidden;
-  cursor: none;
+/* PIANO */
+.piano-visual{position:relative;height:380px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+.piano-label{font-family:'Cormorant Garamond',serif;font-size:.72rem;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;}
+.piano-wrap{background:linear-gradient(180deg,#3d2d20,#1a1410);border-radius:8px 8px 4px 4px;padding:20px 16px 16px;box-shadow:0 20px 60px rgba(0,0,0,.4);}
+.piano-keys{display:flex;align-items:flex-end;gap:2px;position:relative;}
+.piano-oct-label{font-family:'Cormorant Garamond',serif;font-size:.65rem;color:var(--muted);text-align:center;margin-top:8px;letter-spacing:.1em;}
+.key-w{
+  width:28px;height:130px;
+  background:linear-gradient(180deg,#f5f0e8,#fff8f0);
+  border-radius:0 0 5px 5px;
+  border:1px solid rgba(0,0,0,.15);
+  box-shadow:1px 3px 8px rgba(0,0,0,.2),inset 0 -3px 5px rgba(0,0,0,.05);
+  cursor:pointer;transition:all .1s;position:relative;
 }
+.key-w:hover{background:rgba(255,183,197,.6);}
+.key-w.pressed{transform:scaleY(1.03) translateY(2px);background:rgba(212,80,106,.25);box-shadow:1px 1px 4px rgba(0,0,0,.2);}
+.key-b{
+  width:18px;height:82px;
+  background:linear-gradient(180deg,#2a1e15,#111);
+  border-radius:0 0 3px 3px;
+  margin:0 -9px;position:relative;z-index:3;
+  box-shadow:1px 5px 8px rgba(0,0,0,.5);
+  cursor:pointer;transition:all .1s;
+}
+.key-b:hover{background:linear-gradient(180deg,#3d2d20,#1a1410);}
+.key-b.pressed{transform:translateY(3px);box-shadow:0 2px 4px rgba(0,0,0,.4);}
+.piano-glow{position:absolute;width:400px;height:100px;background:radial-gradient(ellipse,rgba(255,183,197,.3) 0%,transparent 70%);bottom:50px;animation:glowPulse 3s ease-in-out infinite;}
+@keyframes glowPulse{0%,100%{opacity:.5;}50%{opacity:1;}}
 
-/* ── CUSTOM CURSOR ── */
-#cursor {
-  width: 14px; height: 14px;
-  border: 1.5px solid var(--accent);
-  border-radius: 50%;
-  position: fixed;
-  pointer-events: none;
-  z-index: 9999;
-  transform: translate(-50%,-50%);
-  transition: transform .15s ease, width .2s, height .2s, background .2s;
-  mix-blend-mode: multiply;
+/* ── EPISODE GUIDE ── */
+#episodes{background:var(--warm);max-width:100%;padding:100px 40px;}
+.eps-inner{max-width:1200px;margin:0 auto;}
+.eps-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-top:48px;}
+.ep-card{
+  background:rgba(253,248,242,.8);border:1px solid rgba(107,76,53,.1);
+  border-radius:4px;overflow:hidden;transition:all .3s;cursor:pointer;
 }
-#cursor-trail {
-  width: 6px; height: 6px;
-  background: var(--sakura);
-  border-radius: 50%;
-  position: fixed;
-  pointer-events: none;
-  z-index: 9998;
-  transform: translate(-50%,-50%);
-  transition: left .08s, top .08s;
-  opacity: .6;
+.ep-card:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(107,76,53,.15);}
+.ep-header{padding:16px 18px 10px;border-bottom:1px solid rgba(107,76,53,.06);}
+.ep-num{font-family:'Playfair Display',serif;font-size:.72rem;font-style:italic;color:var(--muted);letter-spacing:.15em;}
+.ep-title{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--ink);margin-top:2px;}
+.ep-body{padding:12px 18px 16px;font-size:.85rem;color:var(--brown);line-height:1.7;}
+.ep-spoiler-wrap{margin-top:8px;}
+.ep-spoiler-toggle{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:.72rem;color:var(--accent);cursor:pointer;
+  letter-spacing:.1em;text-transform:uppercase;font-family:'Cormorant Garamond',serif;
+  border:1px solid rgba(212,80,106,.2);border-radius:99px;
+  padding:3px 10px;transition:all .2s;
 }
-body:hover #cursor { width: 12px; height: 12px; }
+.ep-spoiler-toggle:hover{background:rgba(212,80,106,.06);}
+.ep-spoiler{
+  font-size:.82rem;color:var(--accent);line-height:1.7;
+  margin-top:8px;
+  filter:blur(5px);transition:filter .4s;
+  background:rgba(212,80,106,.04);border-radius:4px;padding:8px 10px;
+  border-left:2px solid rgba(212,80,106,.3);
+}
+.ep-spoiler.revealed{filter:blur(0);}
 
-/* ── MUSIC NOTES FLOAT ── */
-.note {
-  position: fixed;
-  font-size: 1.2rem;
-  pointer-events: none;
-  z-index: 1;
-  animation: floatNote linear infinite;
-  opacity: 0;
-  color: var(--gold);
+/* ── LETTER SECTION ── */
+#letter{
+  background:var(--ink);padding:100px 40px;
+  max-width:100%;position:relative;overflow:hidden;
 }
-@keyframes floatNote {
-  0%   { transform: translateY(100vh) rotate(0deg); opacity:0; }
-  10%  { opacity: .35; }
-  90%  { opacity: .2; }
-  100% { transform: translateY(-20vh) rotate(360deg); opacity:0; }
+#letter::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 60% 70% at 50% 50%,rgba(255,183,197,.05) 0%,transparent 70%);
 }
+.letter-inner{max-width:760px;margin:0 auto;position:relative;z-index:1;}
+.letter-paper{
+  background:linear-gradient(160deg,#fef9f0,#fdf4e3);
+  border-radius:2px;padding:56px 60px;
+  box-shadow:0 40px 80px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.6);
+  position:relative;transform:rotate(-0.5deg);
+  font-family:'Cormorant Garamond',serif;
+}
+.letter-paper::before{
+  content:'';position:absolute;top:0;left:52px;right:52px;
+  height:100%;
+  background:repeating-linear-gradient(transparent,transparent 27px,rgba(107,76,53,.08) 27px,rgba(107,76,53,.08) 28px);
+  pointer-events:none;
+}
+.letter-paper::after{
+  content:'';position:absolute;left:80px;top:0;bottom:0;
+  width:1px;background:rgba(212,80,106,.15);
+}
+.letter-header{
+  font-family:'Playfair Display',serif;
+  font-style:italic;font-size:1rem;
+  color:var(--muted);margin-bottom:28px;
+  text-align:right;
+}
+.letter-greeting{
+  font-family:'Playfair Display',serif;
+  font-size:1.2rem;font-weight:700;
+  color:var(--ink2);margin-bottom:20px;
+}
+.letter-body{
+  font-size:1.05rem;color:#3d2d1a;
+  line-height:2.2;margin-bottom:20px;
+}
+.letter-body p{margin-bottom:16px;text-indent:2em;}
+.letter-sign{
+  font-family:'Playfair Display',serif;
+  font-style:italic;font-size:1.1rem;
+  color:var(--accent);text-align:right;margin-top:32px;
+}
+.letter-sakura{
+  position:absolute;bottom:20px;right:30px;
+  font-size:1.5rem;opacity:.3;
+}
+#letter .story-tag{color:var(--sakura);}
+#letter .section-title{color:var(--cream);}
+#letter .section-title em{color:var(--sakura);}
 
-/* ── HERO ── */
-#hero {
-  min-height: 100vh;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
+/* WATCH */
+#watch{background:var(--ink2);padding:100px 40px;max-width:100%;text-align:center;position:relative;overflow:hidden;}
+#watch::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 50% 50%,rgba(255,183,197,.05) 0%,transparent 70%);pointer-events:none;}
+#watch .section-title{color:var(--cream);}
+#watch .story-tag{color:var(--sakura);}
+#watch .body-text{color:rgba(253,248,242,.5);}
+.video-frame-wrap{display:inline-block;position:relative;margin-top:40px;filter:drop-shadow(0 30px 60px rgba(0,0,0,.6));}
+.video-border{position:absolute;inset:-12px;border:1px solid rgba(255,183,197,.2);border-radius:4px;pointer-events:none;}
+.video-corner{position:absolute;width:20px;height:20px;border-color:var(--sakura);border-style:solid;opacity:.6;}
+.vc-tl{top:-16px;left:-16px;border-width:2px 0 0 2px;}
+.vc-tr{top:-16px;right:-16px;border-width:2px 2px 0 0;}
+.vc-bl{bottom:-16px;left:-16px;border-width:0 0 2px 2px;}
+.vc-br{bottom:-16px;right:-16px;border-width:0 2px 2px 0;}
+.video-label{font-family:'Cormorant Garamond',serif;font-size:.72rem;letter-spacing:.3em;color:var(--sakura);text-transform:uppercase;margin-top:28px;opacity:.7;}
 
-.hero-bg {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 80% 60% at 60% 30%, rgba(255,183,197,.25) 0%, transparent 65%),
-    radial-gradient(ellipse 50% 50% at 20% 80%, rgba(201,150,90,.12) 0%, transparent 55%),
-    radial-gradient(ellipse 60% 40% at 80% 70%, rgba(127,179,211,.15) 0%, transparent 60%),
-    var(--cream);
-}
+/* CHARACTERS */
+.chars-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:44px;}
+.char-card{text-align:center;padding:28px 16px;border:1px solid rgba(107,76,53,.1);border-radius:2px;position:relative;overflow:hidden;transition:all .35s;cursor:pointer;}
+.char-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .35s;}
+.char-card:hover{transform:translateY(-6px);border-color:rgba(212,80,106,.3);}
+.char-card:hover::before{opacity:1;}
+.char-kousei::before{background:linear-gradient(135deg,rgba(127,179,211,.08),transparent);}
+.char-kaori::before{background:linear-gradient(135deg,rgba(255,183,197,.1),transparent);}
+.char-tsubaki::before{background:linear-gradient(135deg,rgba(201,150,90,.08),transparent);}
+.char-watari::before{background:linear-gradient(135deg,rgba(52,211,153,.06),transparent);}
+.char-avatar{width:72px;height:72px;border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;position:relative;}
+.char-avatar::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:1px solid;opacity:.3;}
+.ca-blue{background:rgba(127,179,211,.15);} .ca-blue::after{border-color:var(--sky);}
+.ca-pink{background:rgba(255,183,197,.2);} .ca-pink::after{border-color:var(--sakura);}
+.ca-warm{background:rgba(201,150,90,.12);} .ca-warm::after{border-color:var(--gold);}
+.ca-green{background:rgba(52,211,153,.1);} .ca-green::after{border-color:#34d399;}
+.char-name{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;color:var(--ink);margin-bottom:3px;}
+.char-name-jp{font-size:.7rem;color:var(--muted);letter-spacing:.15em;margin-bottom:10px;}
+.char-role{font-size:.72rem;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;}
+.char-desc{font-size:.84rem;color:var(--brown);line-height:1.7;}
 
-/* Staff lines */
-.staff-lines {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  opacity: .08;
-}
-.staff-line {
-  position: absolute;
-  width: 200%;
-  height: 1px;
-  background: var(--brown);
-  left: -50%;
-}
+/* MUSIC PLAYLIST */
+#music-section{background:linear-gradient(180deg,var(--warm) 0%,var(--cream) 100%);max-width:100%;padding:100px 40px;}
+.music-inner{max-width:1200px;margin:0 auto;}
+.playlist{margin-top:44px;display:flex;flex-direction:column;gap:2px;}
+.track{display:flex;align-items:center;gap:18px;padding:18px 22px;border:1px solid transparent;border-radius:2px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden;}
+.track::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--accent);transform:scaleY(0);transition:transform .25s;}
+.track:hover{background:rgba(212,80,106,.04);border-color:rgba(212,80,106,.12);}
+.track:hover::before,.track.playing::before{transform:scaleY(1);}
+.track.playing{background:rgba(212,80,106,.06);border-color:rgba(212,80,106,.2);}
+.track-num{font-family:'Playfair Display',serif;font-size:.78rem;font-style:italic;color:var(--muted);width:22px;text-align:center;}
+.track-info{flex:1;}
+.track-title{font-family:'Playfair Display',serif;font-size:.95rem;font-weight:600;color:var(--ink);margin-bottom:2px;}
+.track-artist{font-size:.78rem;color:var(--muted);}
+.track-type{font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;padding:3px 10px;border-radius:99px;}
+.type-op{background:rgba(212,80,106,.1);color:var(--accent);border:1px solid rgba(212,80,106,.2);}
+.type-ed{background:rgba(127,179,211,.1);color:var(--sky);border:1px solid rgba(127,179,211,.2);}
+.type-ins{background:rgba(201,150,90,.1);color:var(--gold);border:1px solid rgba(201,150,90,.2);}
+.track-bars{display:flex;align-items:flex-end;gap:2px;height:14px;opacity:0;transition:opacity .2s;}
+.track.playing .track-bars{opacity:1;}
+.bar-anim{width:3px;background:var(--accent);border-radius:1px;animation:barAnim .6s ease-in-out infinite alternate;}
+.bar-anim:nth-child(2){animation-delay:.1s;} .bar-anim:nth-child(3){animation-delay:.2s;}
+@keyframes barAnim{from{height:3px;}to{height:13px;}}
 
-/* Sakura petals */
-.petal {
-  position: absolute;
-  width: 10px; height: 13px;
-  background: linear-gradient(135deg, #ffccd5, #ffb7c5);
-  border-radius: 50% 0 50% 0;
-  pointer-events: none;
-  animation: petalFall linear infinite;
-  opacity: 0;
-}
-@keyframes petalFall {
-  0%   { transform: translateY(-5%) translateX(0) rotate(0deg); opacity:0; }
-  10%  { opacity: .7; }
-  85%  { opacity: .4; }
-  100% { transform: translateY(105vh) translateX(80px) rotate(720deg); opacity:0; }
-}
+/* STATS */
+.stats-band{background:var(--ink);padding:80px 40px;max-width:100%;}
+.stats-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:40px;text-align:center;}
+.stat-num{font-family:'Playfair Display',serif;font-size:clamp(2.2rem,5vw,3.8rem);font-weight:900;font-style:italic;color:var(--cream);line-height:1;margin-bottom:6px;}
+.stat-num span{color:var(--accent);}
+.stat-label{font-size:.75rem;color:var(--muted);letter-spacing:.2em;text-transform:uppercase;}
 
-.hero-content {
-  position: relative;
-  z-index: 5;
-  text-align: center;
-  padding: 40px 20px;
-  animation: heroReveal 1.8s cubic-bezier(.2,1,.3,1) both;
-}
-@keyframes heroReveal {
-  from { opacity:0; transform: translateY(40px); }
-  to   { opacity:1; transform: translateY(0); }
-}
+/* MOMENTS */
+.moments-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:44px;}
+.moment{border-radius:2px;overflow:hidden;position:relative;cursor:pointer;transition:transform .35s;}
+.moment:hover{transform:scale(1.02);z-index:2;}
+.moment:hover .moment-overlay{opacity:1;}
+.moment-box{width:100%;padding-top:65%;position:relative;overflow:hidden;}
+.moment-fill{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:3rem;}
+.m1{background:linear-gradient(135deg,#7fb3d3,#a8d0e6);}
+.m2{background:linear-gradient(135deg,#ffb7c5,#ffd4dc);}
+.m3{background:linear-gradient(135deg,#f5ead8,#e8d5b5);}
+.m4{background:linear-gradient(135deg,#2d2118,#4a3428);}
+.m5{background:linear-gradient(135deg,#e8a0a0,#f2b8b8);}
+.m6{background:linear-gradient(135deg,#c9965a,#d4aa78);}
+.moment-overlay{position:absolute;inset:0;background:rgba(26,20,16,.7);opacity:0;transition:opacity .35s;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px;text-align:center;}
+.moment-episode{font-family:'Cormorant Garamond',serif;font-size:.7rem;letter-spacing:.25em;text-transform:uppercase;color:var(--sakura);margin-bottom:6px;}
+.moment-quote{font-family:'Playfair Display',serif;font-style:italic;font-size:.9rem;color:var(--cream);line-height:1.5;}
 
-.hero-jp {
-  font-family: 'Playfair Display', serif;
-  font-style: italic;
-  font-size: clamp(1rem, 2.5vw, 1.4rem);
-  color: var(--muted);
-  letter-spacing: .4em;
-  margin-bottom: 16px;
-  animation: heroReveal 1.8s .2s both;
-}
-.hero-title {
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(3rem, 9vw, 7rem);
-  font-weight: 900;
-  line-height: .95;
-  color: var(--ink);
-  position: relative;
-}
-.hero-title em {
-  font-style: italic;
-  color: var(--accent);
-  display: block;
-}
-.hero-sub {
-  font-size: clamp(1rem, 2vw, 1.3rem);
-  color: var(--muted);
-  margin-top: 20px;
-  font-style: italic;
-  letter-spacing: .08em;
-  animation: heroReveal 1.8s .5s both;
-}
-.hero-line {
-  width: 120px; height: 1px;
-  background: linear-gradient(90deg, transparent, var(--gold), transparent);
-  margin: 24px auto;
-  animation: heroReveal 1.8s .4s both;
-}
+/* FOOTER */
+footer{background:var(--ink);padding:80px 40px 40px;position:relative;overflow:hidden;}
+footer::before{content:'四月は君の嘘';position:absolute;font-family:'Playfair Display',serif;font-size:7rem;font-weight:900;color:rgba(255,255,255,.02);bottom:20px;right:40px;white-space:nowrap;pointer-events:none;}
+.footer-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr;gap:60px;}
+.footer-brand{font-family:'Playfair Display',serif;font-size:1.8rem;font-style:italic;color:var(--cream);margin-bottom:14px;}
+.footer-tagline{font-size:.9rem;color:var(--muted);line-height:1.8;max-width:300px;}
+.footer-section-title{font-family:'Cormorant Garamond',serif;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);margin-bottom:18px;}
+.footer-link{display:block;color:var(--muted);font-size:.88rem;text-decoration:none;margin-bottom:10px;transition:color .2s;cursor:pointer;}
+.footer-link:hover{color:var(--cream);}
+.footer-bottom{max-width:1200px;margin:60px auto 0;padding-top:22px;border-top:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;font-size:.75rem;color:rgba(154,128,112,.5);}
 
-.hero-scroll {
-  position: absolute;
-  bottom: 40px; left: 50%;
-  transform: translateX(-50%);
-  display: flex; flex-direction: column;
-  align-items: center; gap: 8px;
-  color: var(--muted); font-size: .75rem;
-  letter-spacing: .2em; text-transform: uppercase;
-  animation: fadeUp 2s 1.5s both;
-  cursor: pointer;
-}
-@keyframes fadeUp {
-  from { opacity:0; transform: translateX(-50%) translateY(10px); }
-  to   { opacity:1; transform: translateX(-50%) translateY(0); }
-}
-.scroll-arrow {
-  width: 20px; height: 20px;
-  border-right: 1px solid var(--muted);
-  border-bottom: 1px solid var(--muted);
-  transform: rotate(45deg);
-  animation: bounce .9s ease-in-out infinite alternate;
-}
-@keyframes bounce { to { transform: rotate(45deg) translateY(5px); } }
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .8s cubic-bezier(.2,1,.3,1),transform .8s cubic-bezier(.2,1,.3,1);}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.reveal-delay-1{transition-delay:.12s;} .reveal-delay-2{transition-delay:.24s;}
+.reveal-delay-3{transition-delay:.36s;} .reveal-delay-4{transition-delay:.48s;}
 
-/* ── NAV ── */
-nav {
-  position: fixed; top: 0; left: 0; right: 0;
-  z-index: 100;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 20px 48px;
-  transition: all .4s;
-}
-nav.scrolled {
-  background: rgba(253,248,242,.92);
-  backdrop-filter: blur(16px);
-  padding: 14px 48px;
-  box-shadow: 0 1px 0 rgba(107,76,53,.1);
-}
-.nav-logo {
-  font-family: 'Playfair Display', serif;
-  font-size: .95rem;
-  font-style: italic;
-  color: var(--ink);
-  letter-spacing: .05em;
-}
-.nav-links { display: flex; gap: 32px; }
-.nav-link {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: .9rem;
-  color: var(--brown);
-  text-decoration: none;
-  letter-spacing: .1em;
-  position: relative;
-  transition: color .2s;
-}
-.nav-link::after {
-  content: '';
-  position: absolute; bottom: -2px; left: 0; right: 0;
-  height: 1px; background: var(--accent);
-  transform: scaleX(0);
-  transition: transform .3s;
-  transform-origin: left;
-}
-.nav-link:hover { color: var(--accent); }
-.nav-link:hover::after { transform: scaleX(1); }
+/* STICKY NOTE */
+.sticky-note{position:fixed;bottom:88px;right:32px;z-index:200;width:190px;background:#fff9c4;padding:16px;border-radius:2px;box-shadow:4px 4px 20px rgba(0,0,0,.15),0 1px 0 #e6e047 inset;transform:rotate(2deg);font-family:'Cormorant Garamond',serif;font-size:.88rem;color:#4a3e00;line-height:1.6;cursor:pointer;transition:transform .3s;}
+.sticky-note:hover{transform:rotate(0deg) scale(1.04);}
+.sticky-x{position:absolute;top:6px;right:8px;background:none;border:none;color:#9a8000;font-size:.95rem;cursor:pointer;}
 
-/* ── SECTIONS BASE ── */
-section {
-  padding: 100px 40px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-/* ── QUOTE BAND ── */
-.quote-band {
-  background: var(--ink);
-  padding: 80px 40px;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-  margin: 0;
-  max-width: 100%;
-}
-.quote-band::before {
-  content: '""';
-  position: absolute;
-  font-family: 'Playfair Display', serif;
-  font-size: 20rem;
-  color: rgba(255,255,255,.03);
-  top: -60px; left: 20px;
-  line-height: 1;
-}
-.quote-text {
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(1.5rem, 3.5vw, 2.5rem);
-  font-style: italic;
-  color: var(--cream);
-  max-width: 800px;
-  margin: 0 auto 20px;
-  line-height: 1.5;
-  position: relative;
-  z-index: 1;
-}
-.quote-src {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: .9rem;
-  color: var(--gold);
-  letter-spacing: .2em;
-  text-transform: uppercase;
-}
-
-/* ── STORY SECTION ── */
-.story-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 80px;
-  align-items: center;
-}
-.story-tag {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: .8rem;
-  letter-spacing: .3em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 16px;
-}
-.section-title {
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(2rem, 4vw, 3.2rem);
-  font-weight: 700;
-  line-height: 1.15;
-  margin-bottom: 24px;
-  color: var(--ink);
-}
-.section-title em { font-style: italic; color: var(--accent); }
-.body-text {
-  font-size: 1.1rem;
-  color: var(--brown);
-  line-height: 2;
-  font-weight: 300;
-  margin-bottom: 20px;
-}
-
-.piano-visual {
-  position: relative;
-  height: 360px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.piano-keys {
-  display: flex;
-  gap: 3px;
-  align-items: flex-end;
-  position: relative;
-  z-index: 2;
-}
-.key-white {
-  width: 36px; height: 160px;
-  background: linear-gradient(180deg, #f0ece4, #fff);
-  border-radius: 0 0 6px 6px;
-  border: 1px solid rgba(0,0,0,.12);
-  box-shadow: 2px 4px 12px rgba(0,0,0,.15), inset 0 -4px 8px rgba(0,0,0,.05);
-  cursor: pointer;
-  transition: transform .1s, box-shadow .1s;
-  animation: keyPulse 4s ease-in-out infinite;
-}
-.key-black {
-  width: 22px; height: 100px;
-  background: linear-gradient(180deg, #2a1e15, #1a1410);
-  border-radius: 0 0 4px 4px;
-  margin: 0 -11px;
-  position: relative; z-index: 3;
-  box-shadow: 2px 6px 10px rgba(0,0,0,.4);
-  cursor: pointer;
-  transition: transform .1s;
-}
-.key-white:hover { transform: scaleY(1.02); box-shadow: 2px 6px 18px rgba(0,0,0,.2); }
-.key-black:hover { transform: scaleY(1.03) translateY(1px); }
-@keyframes keyPulse {
-  0%,100% { box-shadow: 2px 4px 12px rgba(0,0,0,.15), inset 0 -4px 8px rgba(0,0,0,.05); }
-  50% { box-shadow: 2px 4px 20px rgba(212,80,106,.2), inset 0 -4px 8px rgba(0,0,0,.05); }
-}
-.piano-glow {
-  position: absolute;
-  width: 300px; height: 150px;
-  background: radial-gradient(ellipse, rgba(255,183,197,.4) 0%, transparent 70%);
-  bottom: 60px;
-  animation: glowPulse 3s ease-in-out infinite;
-}
-@keyframes glowPulse { 0%,100% { opacity:.6; } 50% { opacity:1; } }
-
-/* ── VIDEO SECTION ── */
-#watch {
-  background: var(--ink2);
-  padding: 100px 40px;
-  max-width: 100%;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-}
-#watch::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: radial-gradient(ellipse 60% 80% at 50% 50%, rgba(255,183,197,.06) 0%, transparent 70%);
-  pointer-events: none;
-}
-#watch .section-title { color: var(--cream); }
-#watch .story-tag { color: var(--sakura); }
-#watch .body-text { color: rgba(253,248,242,.5); }
-
-.video-frame-wrap {
-  display: inline-block;
-  position: relative;
-  margin-top: 40px;
-  filter: drop-shadow(0 30px 60px rgba(0,0,0,.6));
-}
-.video-border {
-  position: absolute; inset: -12px;
-  border: 1px solid rgba(255,183,197,.2);
-  border-radius: 4px;
-  pointer-events: none;
-}
-.video-border::before {
-  content: '';
-  position: absolute; inset: -8px;
-  border: 1px solid rgba(255,183,197,.08);
-  border-radius: 6px;
-}
-.video-corner {
-  position: absolute;
-  width: 20px; height: 20px;
-  border-color: var(--sakura);
-  border-style: solid;
-  opacity: .6;
-}
-.vc-tl { top:-16px; left:-16px; border-width: 2px 0 0 2px; }
-.vc-tr { top:-16px; right:-16px; border-width: 2px 2px 0 0; }
-.vc-bl { bottom:-16px; left:-16px; border-width: 0 0 2px 2px; }
-.vc-br { bottom:-16px; right:-16px; border-width: 0 2px 2px 0; }
-
-.video-label {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: .75rem;
-  letter-spacing: .3em;
-  color: var(--sakura);
-  text-transform: uppercase;
-  margin-top: 28px;
-  opacity: .7;
-}
-
-/* ── CHARACTERS ── */
-.chars-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
-  margin-top: 48px;
-}
-.char-card {
-  text-align: center;
-  padding: 32px 20px;
-  border: 1px solid rgba(107,76,53,.1);
-  border-radius: 2px;
-  position: relative;
-  overflow: hidden;
-  transition: all .35s;
-  cursor: pointer;
-}
-.char-card::before {
-  content: '';
-  position: absolute; inset: 0;
-  opacity: 0;
-  transition: opacity .35s;
-}
-.char-card:hover { transform: translateY(-6px); border-color: rgba(212,80,106,.3); }
-.char-card:hover::before { opacity: 1; }
-.char-kousei::before { background: linear-gradient(135deg, rgba(127,179,211,.08), transparent); }
-.char-kaori::before  { background: linear-gradient(135deg, rgba(255,183,197,.1), transparent); }
-.char-tsubaki::before { background: linear-gradient(135deg, rgba(201,150,90,.08), transparent); }
-.char-watari::before  { background: linear-gradient(135deg, rgba(52,211,153,.06), transparent); }
-
-.char-avatar {
-  width: 80px; height: 80px;
-  border-radius: 50%;
-  margin: 0 auto 16px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 2rem;
-  position: relative;
-}
-.char-avatar::after {
-  content: '';
-  position: absolute; inset: -4px;
-  border-radius: 50%;
-  border: 1px solid;
-  opacity: .3;
-}
-.ca-blue  { background: rgba(127,179,211,.15); }
-.ca-blue::after  { border-color: var(--sky); }
-.ca-pink  { background: rgba(255,183,197,.2); }
-.ca-pink::after  { border-color: var(--sakura); }
-.ca-warm  { background: rgba(201,150,90,.12); }
-.ca-warm::after  { border-color: var(--gold); }
-.ca-green { background: rgba(52,211,153,.1); }
-.ca-green::after { border-color: #34d399; }
-
-.char-name {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--ink);
-  margin-bottom: 4px;
-}
-.char-name-jp {
-  font-size: .72rem;
-  color: var(--muted);
-  letter-spacing: .15em;
-  margin-bottom: 12px;
-}
-.char-role {
-  font-size: .78rem;
-  color: var(--accent);
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  margin-bottom: 12px;
-}
-.char-desc {
-  font-size: .88rem;
-  color: var(--brown);
-  line-height: 1.7;
-}
-
-/* ── MUSIC SECTION ── */
-#music {
-  background: linear-gradient(180deg, var(--warm) 0%, var(--cream) 100%);
-  max-width: 100%;
-  padding: 100px 40px;
-}
-.music-inner { max-width: 1200px; margin: 0 auto; }
-.playlist {
-  margin-top: 48px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.track {
-  display: flex; align-items: center; gap: 20px;
-  padding: 20px 24px;
-  border: 1px solid transparent;
-  border-radius: 2px;
-  cursor: pointer;
-  transition: all .25s;
-  position: relative;
-  overflow: hidden;
-}
-.track::before {
-  content: '';
-  position: absolute; left: 0; top: 0; bottom: 0;
-  width: 2px; background: var(--accent);
-  transform: scaleY(0);
-  transition: transform .25s;
-}
-.track:hover { background: rgba(212,80,106,.04); border-color: rgba(212,80,106,.12); }
-.track:hover::before { transform: scaleY(1); }
-.track.playing { background: rgba(212,80,106,.06); border-color: rgba(212,80,106,.2); }
-.track.playing::before { transform: scaleY(1); }
-.track-num {
-  font-family: 'Playfair Display', serif;
-  font-size: .8rem;
-  font-style: italic;
-  color: var(--muted);
-  width: 24px; text-align: center;
-}
-.track-info { flex: 1; }
-.track-title {
-  font-family: 'Playfair Display', serif;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--ink);
-  margin-bottom: 3px;
-}
-.track-artist { font-size: .82rem; color: var(--muted); }
-.track-type {
-  font-size: .68rem; letter-spacing: .15em;
-  text-transform: uppercase;
-  padding: 3px 10px;
-  border-radius: 99px;
-}
-.type-op  { background: rgba(212,80,106,.1); color: var(--accent); border: 1px solid rgba(212,80,106,.2); }
-.type-ed  { background: rgba(127,179,211,.1); color: var(--sky); border: 1px solid rgba(127,179,211,.2); }
-.type-ins { background: rgba(201,150,90,.1); color: var(--gold); border: 1px solid rgba(201,150,90,.2); }
-.track-bars {
-  display: flex; align-items: flex-end; gap: 2px;
-  height: 16px; opacity: 0;
-  transition: opacity .2s;
-}
-.track.playing .track-bars { opacity: 1; }
-.bar-anim {
-  width: 3px;
-  background: var(--accent);
-  border-radius: 1px;
-  animation: barAnim .6s ease-in-out infinite alternate;
-}
-.bar-anim:nth-child(2) { animation-delay: .1s; }
-.bar-anim:nth-child(3) { animation-delay: .2s; }
-@keyframes barAnim { from { height: 4px; } to { height: 14px; } }
-
-/* ── STATS ── */
-.stats-band {
-  background: var(--ink);
-  padding: 80px 40px;
-  max-width: 100%;
-}
-.stats-inner {
-  max-width: 1200px; margin: 0 auto;
-  display: grid; grid-template-columns: repeat(4,1fr);
-  gap: 40px; text-align: center;
-}
-.stat-num {
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(2.5rem,5vw,4rem);
-  font-weight: 900;
-  font-style: italic;
-  color: var(--cream);
-  line-height: 1;
-  margin-bottom: 8px;
-}
-.stat-num span { color: var(--accent); }
-.stat-label {
-  font-size: .78rem;
-  color: var(--muted);
-  letter-spacing: .2em;
-  text-transform: uppercase;
-}
-
-/* ── GALLERY / MOMENTS ── */
-.moments-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: auto auto;
-  gap: 16px;
-  margin-top: 48px;
-}
-.moment {
-  border-radius: 2px;
-  overflow: hidden;
-  position: relative;
-  cursor: pointer;
-  transition: transform .35s;
-}
-.moment:hover { transform: scale(1.02); z-index: 2; }
-.moment:hover .moment-overlay { opacity: 1; }
-.moment-box {
-  width: 100%; padding-top: 65%;
-  position: relative;
-  overflow: hidden;
-}
-.moment-fill {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 3rem;
-}
-.m1 { background: linear-gradient(135deg, #7fb3d3, #a8d0e6); }
-.m2 { background: linear-gradient(135deg, #ffb7c5, #ffd4dc); }
-.m3 { background: linear-gradient(135deg, #f5ead8, #e8d5b5); }
-.m4 { background: linear-gradient(135deg, #2d2118, #4a3428); }
-.m5 { background: linear-gradient(135deg, #e8a0a0, #f2b8b8); }
-.m6 { background: linear-gradient(135deg, #c9965a, #d4aa78); }
-
-.moment-overlay {
-  position: absolute; inset: 0;
-  background: rgba(26,20,16,.7);
-  opacity: 0; transition: opacity .35s;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  padding: 20px; text-align: center;
-}
-.moment-episode {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: .72rem; letter-spacing: .25em;
-  text-transform: uppercase; color: var(--sakura);
-  margin-bottom: 8px;
-}
-.moment-quote {
-  font-family: 'Playfair Display', serif;
-  font-style: italic;
-  font-size: .95rem; color: var(--cream);
-  line-height: 1.5;
-}
-
-/* ── FOOTER ── */
-footer {
-  background: var(--ink);
-  padding: 80px 40px 40px;
-  position: relative;
-  overflow: hidden;
-}
-footer::before {
-  content: '四月は君の嘘';
-  position: absolute;
-  font-family: 'Playfair Display', serif;
-  font-size: 8rem; font-weight: 900;
-  color: rgba(255,255,255,.025);
-  bottom: 20px; right: 40px;
-  white-space: nowrap; pointer-events: none;
-}
-.footer-inner {
-  max-width: 1200px; margin: 0 auto;
-  display: grid; grid-template-columns: 2fr 1fr 1fr;
-  gap: 60px;
-}
-.footer-brand {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.8rem; font-style: italic;
-  color: var(--cream); margin-bottom: 16px;
-}
-.footer-tagline {
-  font-size: .95rem; color: var(--muted);
-  line-height: 1.8; max-width: 320px;
-}
-.footer-section-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: .72rem; letter-spacing: .3em;
-  text-transform: uppercase; color: var(--gold);
-  margin-bottom: 20px;
-}
-.footer-link {
-  display: block; color: var(--muted);
-  font-size: .9rem; text-decoration: none;
-  margin-bottom: 12px; transition: color .2s;
-  cursor: pointer;
-}
-.footer-link:hover { color: var(--cream); }
-.footer-bottom {
-  max-width: 1200px; margin: 60px auto 0;
-  padding-top: 24px;
-  border-top: 1px solid rgba(255,255,255,.06);
-  display: flex; align-items: center; justify-content: space-between;
-  font-size: .78rem; color: rgba(154,128,112,.5);
-}
-.footer-sakura { font-size: 1rem; animation: spin 8s linear infinite; display: inline-block; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ── WAVE DIVIDER ── */
-.wave {
-  width: 100%; height: 80px;
-  overflow: hidden; line-height: 0;
-}
-.wave svg { display: block; }
-
-/* ── SCROLL REVEAL ── */
-.reveal {
-  opacity: 0;
-  transform: translateY(30px);
-  transition: opacity .8s cubic-bezier(.2,1,.3,1), transform .8s cubic-bezier(.2,1,.3,1);
-}
-.reveal.visible { opacity: 1; transform: translateY(0); }
-.reveal-delay-1 { transition-delay: .1s; }
-.reveal-delay-2 { transition-delay: .2s; }
-.reveal-delay-3 { transition-delay: .3s; }
-.reveal-delay-4 { transition-delay: .4s; }
-
-/* ── STICKY NOTE POP ── */
-.sticky-note {
-  position: fixed;
-  bottom: 40px; right: 40px;
-  z-index: 200;
-  width: 200px;
-  background: #fff9c4;
-  padding: 18px;
-  border-radius: 2px;
-  box-shadow: 4px 4px 20px rgba(0,0,0,.15), 0 1px 0 #e6e047 inset;
-  transform: rotate(2deg);
-  font-family: 'Cormorant Garamond', serif;
-  font-size: .9rem;
-  color: #4a3e00;
-  line-height: 1.6;
-  cursor: pointer;
-  transition: transform .3s;
-}
-.sticky-note:hover { transform: rotate(0deg) scale(1.05); }
-.sticky-x {
-  position: absolute; top: 8px; right: 10px;
-  background: none; border: none;
-  color: #9a8000; font-size: 1rem; cursor: pointer;
-}
-
-/* RESPONSIVE */
 @media(max-width:768px){
-  nav { padding: 16px 20px; }
-  .nav-links { display: none; }
-  section { padding: 60px 20px; }
-  .story-grid { grid-template-columns:1fr; gap:40px; }
-  .chars-grid { grid-template-columns:1fr 1fr; }
-  .stats-inner { grid-template-columns:1fr 1fr; gap:24px; }
-  .moments-grid { grid-template-columns:1fr 1fr; }
-  .footer-inner { grid-template-columns:1fr; gap:30px; }
-  footer::before { display:none; }
-  .quote-band,.stats-band,#watch,#music { padding: 60px 20px; }
+  nav{padding:14px 18px;}
+  .nav-links{display:none;}
+  section{padding:60px 20px;}
+  .story-grid{grid-template-columns:1fr;gap:36px;}
+  .chars-grid{grid-template-columns:1fr 1fr;}
+  .stats-inner{grid-template-columns:1fr 1fr;gap:20px;}
+  .moments-grid{grid-template-columns:1fr 1fr;}
+  .footer-inner{grid-template-columns:1fr;gap:28px;}
+  footer::before{display:none;}
+  .quote-band,.stats-band,#watch,#music-section,#episodes,#letter,#opening-dialogue{padding:60px 20px;}
+  .letter-paper{padding:36px 28px;}
+  #music-player{min-width:240px;left:12px;bottom:12px;}
 }
 </style>
 </head>
 <body>
 
-<!-- Cursor -->
 <div id="cursor"></div>
 <div id="cursor-trail"></div>
 
-<!-- Sticky note -->
-<div class="sticky-note" id="sticky">
-  <button class="sticky-x" onclick="document.getElementById('sticky').remove()">✕</button>
-  <em>"เดือนเมษา..."</em><br>
-  เดือนที่ทุกอย่างเปลี่ยนไปตลอดกาล 🌸
-</div>
-
-<!-- Music notes -->
+<!-- FLOATING NOTES -->
 <div class="note" style="left:5%;animation-duration:12s;animation-delay:0s;font-size:.9rem">♩</div>
 <div class="note" style="left:15%;animation-duration:15s;animation-delay:3s">♪</div>
 <div class="note" style="left:30%;animation-duration:18s;animation-delay:1s;font-size:1.4rem">♫</div>
@@ -800,56 +428,100 @@ footer::before {
 <div class="note" style="left:85%;animation-duration:14s;animation-delay:7s">♪</div>
 <div class="note" style="left:92%;animation-duration:20s;animation-delay:4s">♫</div>
 
-<!-- Petals -->
-<div class="petal" style="left:10%;animation-duration:8s;animation-delay:0s;width:12px;height:15px"></div>
-<div class="petal" style="left:25%;animation-duration:11s;animation-delay:2s"></div>
-<div class="petal" style="left:40%;animation-duration:9s;animation-delay:4s;width:8px;height:10px"></div>
-<div class="petal" style="left:60%;animation-duration:13s;animation-delay:1s;width:14px;height:17px"></div>
-<div class="petal" style="left:75%;animation-duration:10s;animation-delay:6s"></div>
-<div class="petal" style="left:88%;animation-duration:12s;animation-delay:3s;width:9px;height:11px"></div>
+<!-- SAKURA PETALS -->
+<div class="petal" style="left:8%;animation-duration:9s;animation-delay:0s"></div>
+<div class="petal" style="left:22%;animation-duration:12s;animation-delay:2s;width:8px;height:10px"></div>
+<div class="petal" style="left:38%;animation-duration:10s;animation-delay:4s;width:13px;height:16px"></div>
+<div class="petal" style="left:55%;animation-duration:14s;animation-delay:1s"></div>
+<div class="petal" style="left:72%;animation-duration:11s;animation-delay:6s;width:8px;height:10px"></div>
+<div class="petal" style="left:85%;animation-duration:13s;animation-delay:3s"></div>
+<div class="petal" style="left:95%;animation-duration:9s;animation-delay:8s;width:11px;height:14px"></div>
+
+<!-- ══════ MUSIC PLAYER ══════ -->
+<div id="music-player">
+  <div class="player-title">🎵 Now Playing</div>
+  <div class="player-song">Hikaru nara (光るなら)</div>
+  <div class="player-artist">Goose house — Your Lie in April OP</div>
+  <div class="player-controls">
+    <button class="btn-play" id="btn-play" onclick="togglePlay()">▶</button>
+    <div class="player-progress-wrap" onclick="seekAudio(event)">
+      <div class="player-progress-bg">
+        <div class="player-progress-bar" id="progress-bar"></div>
+      </div>
+      <div class="player-time">
+        <span id="time-cur">0:00</span>
+        <span id="time-total">--:--</span>
+      </div>
+    </div>
+    <div class="player-viz" id="player-viz">
+      <div class="pvbar" style="height:6px"></div>
+      <div class="pvbar" style="height:12px"></div>
+      <div class="pvbar" style="height:8px"></div>
+      <div class="pvbar" style="height:15px"></div>
+      <div class="pvbar" style="height:5px"></div>
+    </div>
+  </div>
+  <div class="mp3-drop" id="mp3-drop" onclick="document.getElementById('mp3-input').click()">
+    📂 คลิกเพื่อโหลด Hikaru Nara.mp3 จากเครื่อง
+  </div>
+  <input type="file" id="mp3-input" accept=".mp3,audio/*" style="display:none" onchange="loadMp3(event)">
+  <audio id="audio-player" preload="none"></audio>
+</div>
+<button id="player-toggle" onclick="togglePlayerUI()">🎵</button>
+
+<!-- STICKY NOTE -->
+<div class="sticky-note" id="sticky">
+  <button class="sticky-x" onclick="document.getElementById('sticky').remove()">✕</button>
+  <em>"เดือนเมษา..."</em><br>
+  เดือนที่ทุกอย่างเปลี่ยนไปตลอดกาล 🌸
+</div>
 
 <!-- NAV -->
 <nav id="navbar">
   <div class="nav-logo">Your Lie in April</div>
   <div class="nav-links">
-    <a class="nav-link" href="#story">เรื่องราว</a>
-    <a class="nav-link" href="#watch">ดูอนิเมะ</a>
-    <a class="nav-link" href="#characters">ตัวละคร</a>
-    <a class="nav-link" href="#music">ดนตรี</a>
-    <a class="nav-link" href="#moments">ช่วงเวลา</a>
+    <span class="nav-link" onclick="scrollTo('story')">เรื่องราว</span>
+    <span class="nav-link" onclick="scrollTo('watch')">ดูอนิเมะ</span>
+    <span class="nav-link" onclick="scrollTo('episodes')">ตอน 1–22</span>
+    <span class="nav-link" onclick="scrollTo('characters')">ตัวละคร</span>
+    <span class="nav-link" onclick="scrollTo('letter')">จดหมาย</span>
+    <span class="nav-link" onclick="scrollTo('music-section')">ดนตรี</span>
   </div>
 </nav>
 
 <!-- ══════ HERO ══════ -->
 <div id="hero">
   <div class="hero-bg"></div>
-
-  <!-- Staff lines -->
   <div class="staff-lines">
-    <div class="staff-line" style="top:30%"></div>
-    <div class="staff-line" style="top:35%"></div>
-    <div class="staff-line" style="top:40%"></div>
-    <div class="staff-line" style="top:45%"></div>
+    <div class="staff-line" style="top:30%"></div><div class="staff-line" style="top:35%"></div>
+    <div class="staff-line" style="top:40%"></div><div class="staff-line" style="top:45%"></div>
     <div class="staff-line" style="top:50%"></div>
   </div>
-
   <div class="hero-content">
     <div class="hero-jp">四月は君の嘘</div>
-    <h1 class="hero-title">
-      Your Lie<br>
-      <em>in April</em>
-    </h1>
+    <h1 class="hero-title">Your Lie<br><em>in April</em></h1>
     <div class="hero-line"></div>
     <p class="hero-sub">ความรัก ดนตรี และบทเพลงสุดท้ายที่ยังก้องอยู่ในใจ</p>
   </div>
-
-  <div class="hero-scroll" onclick="document.getElementById('story').scrollIntoView({behavior:'smooth'})">
+  <div class="hero-scroll" onclick="scrollTo('opening-dialogue')">
     <span>เลื่อนลง</span>
     <div class="scroll-arrow"></div>
   </div>
 </div>
 
-<!-- QUOTE BAND -->
+<!-- ══════ OPENING DIALOGUE ══════ -->
+<div id="opening-dialogue">
+  <div class="dialogue-deco" style="left:-40px;top:-60px">春</div>
+  <p class="dialogue-line1">
+    "ฤดูใบไม้ผลิที่ใกล้เจอเธอ ใกล้เข้ามาแล้วสินะ"
+  </p>
+  <p class="dialogue-line2">
+    "และ ฤดูใบไม้ผลิที่ไม่มีเธอก็กำลังมาถึงแล้วเช่นกัน"
+  </p>
+  <p class="dialogue-dash">— Kousei Arima</p>
+</div>
+
+<!-- QUOTE -->
 <div class="quote-band">
   <p class="quote-text">"เธอทำให้โลกของฉันมีสี ในช่วงเวลาที่ทุกอย่างมืดหม่น"</p>
   <p class="quote-src">— Kousei Arima</p>
@@ -861,38 +533,48 @@ footer::before {
     <div class="reveal">
       <div class="story-tag">// เรื่องราว</div>
       <h2 class="section-title">เมื่อดนตรีกลับมา<br><em>พร้อมกับเธอ</em></h2>
-      <p class="body-text">
-        Kousei Arima เคยเป็นนักเปียโนอัจฉริยะ แต่หลังจากการสูญเสียแม่ เขากลับได้ยินแต่เสียงที่ดับสลาย
-        ไม่มีโน้ต ไม่มีบทเพลง เพียงแค่ความเงียบที่กดทับ
-      </p>
-      <p class="body-text">
-        จนกระทั่งวันหนึ่ง <strong>Kaori Miyazono</strong> — นักไวโอลินที่เล่นด้วยหัวใจ
-        ปรากฏตัวขึ้น และพาเขากลับสู่โลกของดนตรีอีกครั้ง
-      </p>
-      <p class="body-text">
-        แต่ฤดูใบไม้ผลิที่งดงามนั้น มาพร้อมกับความจริงที่เจ็บปวดยิ่งกว่าที่ใครจะทนได้...
-      </p>
+      <p class="body-text">Kousei Arima เคยเป็นนักเปียโนอัจฉริยะ แต่หลังจากการสูญเสียแม่ เขากลับได้ยินแต่เสียงที่ดับสลาย ไม่มีโน้ต ไม่มีบทเพลง เพียงแค่ความเงียบที่กดทับ</p>
+      <p class="body-text">จนกระทั่งวันหนึ่ง <strong>Kaori Miyazono</strong> — นักไวโอลินที่เล่นด้วยหัวใจปรากฏตัวขึ้น และพาเขากลับสู่โลกของดนตรีอีกครั้ง</p>
+      <p class="body-text">แต่ฤดูใบไม้ผลิที่งดงามนั้น มาพร้อมกับความจริงที่เจ็บปวดยิ่งกว่าที่ใครจะทนได้...</p>
     </div>
     <div class="reveal reveal-delay-2">
+      <!-- PIANO WITH FULL KEYBOARD -->
       <div class="piano-visual">
         <div class="piano-glow"></div>
-        <div class="piano-keys" id="piano-demo">
-          <div class="key-white" onclick="playNote(this,0)"></div>
-          <div class="key-black" onclick="playNote(this,1)"></div>
-          <div class="key-white" onclick="playNote(this,2)"></div>
-          <div class="key-black" onclick="playNote(this,3)"></div>
-          <div class="key-white" onclick="playNote(this,4)"></div>
-          <div class="key-white" onclick="playNote(this,5)"></div>
-          <div class="key-black" onclick="playNote(this,6)"></div>
-          <div class="key-white" onclick="playNote(this,7)"></div>
-          <div class="key-black" onclick="playNote(this,8)"></div>
-          <div class="key-white" onclick="playNote(this,9)"></div>
-          <div class="key-black" onclick="playNote(this,10)"></div>
-          <div class="key-white" onclick="playNote(this,11)"></div>
+        <div class="piano-wrap">
+          <div class="piano-keys" id="piano-keys">
+            <!-- Octave 1 (C4–B4) -->
+            <div class="key-w" data-note="C4" data-freq="261.63"></div>
+            <div class="key-b" data-note="Cs4" data-freq="277.18"></div>
+            <div class="key-w" data-note="D4" data-freq="293.66"></div>
+            <div class="key-b" data-note="Ds4" data-freq="311.13"></div>
+            <div class="key-w" data-note="E4" data-freq="329.63"></div>
+            <div class="key-w" data-note="F4" data-freq="349.23"></div>
+            <div class="key-b" data-note="Fs4" data-freq="369.99"></div>
+            <div class="key-w" data-note="G4" data-freq="392.00"></div>
+            <div class="key-b" data-note="Gs4" data-freq="415.30"></div>
+            <div class="key-w" data-note="A4" data-freq="440.00"></div>
+            <div class="key-b" data-note="As4" data-freq="466.16"></div>
+            <div class="key-w" data-note="B4" data-freq="493.88"></div>
+            <!-- Octave 2 (C5–B5) -->
+            <div class="key-w" data-note="C5" data-freq="523.25"></div>
+            <div class="key-b" data-note="Cs5" data-freq="554.37"></div>
+            <div class="key-w" data-note="D5" data-freq="587.33"></div>
+            <div class="key-b" data-note="Ds5" data-freq="622.25"></div>
+            <div class="key-w" data-note="E5" data-freq="659.25"></div>
+            <div class="key-w" data-note="F5" data-freq="698.46"></div>
+            <div class="key-b" data-note="Fs5" data-freq="739.99"></div>
+            <div class="key-w" data-note="G5" data-freq="783.99"></div>
+            <div class="key-b" data-note="Gs5" data-freq="830.61"></div>
+            <div class="key-w" data-note="A5" data-freq="880.00"></div>
+            <div class="key-b" data-note="As5" data-freq="932.33"></div>
+            <div class="key-w" data-note="B5" data-freq="987.77"></div>
+          </div>
+          <div class="piano-oct-label">C4 ← Octave 4 → B4 &nbsp;|&nbsp; C5 ← Octave 5 → B5</div>
         </div>
-        <div style="position:absolute;bottom:40px;font-family:'Cormorant Garamond',serif;
-          font-size:.75rem;color:var(--muted);letter-spacing:.15em;text-transform:uppercase">
-          คลิกเพื่อเล่นโน้ต ♪
+        <div class="piano-label">คลิกหรือกดแป้นพิมพ์เพื่อเล่น ♪</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:.7rem;color:var(--muted);letter-spacing:.1em;text-align:center;line-height:1.8">
+          แป้นพิมพ์: <strong style="color:var(--brown)">a s d f g h j k</strong> = โน้ตขาว &nbsp;|&nbsp; <strong style="color:var(--brown)">w e t y u</strong> = โน้ตดำ
         </div>
       </div>
     </div>
@@ -903,28 +585,31 @@ footer::before {
 <div id="watch">
   <div class="story-tag">// ดูออนไลน์</div>
   <h2 class="section-title reveal">ชมอนิเมะ<br><em>ตอนแรก</em></h2>
-  <p class="body-text reveal reveal-delay-1" style="max-width:540px;margin:0 auto">
-    สัมผัสเรื่องราวที่จะทำให้หัวใจคุณสั่นไหว — ผ่านเสียงดนตรีและความรู้สึกที่ไม่มีวันลืม
-  </p>
-
+  <p class="body-text reveal reveal-delay-1" style="max-width:540px;margin:0 auto">สัมผัสเรื่องราวที่จะทำให้หัวใจสั่นไหว — ผ่านเสียงดนตรีและความรู้สึกที่ไม่มีวันลืม</p>
   <div class="video-frame-wrap reveal reveal-delay-2">
     <div class="video-border">
-      <div class="video-corner vc-tl"></div>
-      <div class="video-corner vc-tr"></div>
-      <div class="video-corner vc-bl"></div>
-      <div class="video-corner vc-br"></div>
+      <div class="video-corner vc-tl"></div><div class="video-corner vc-tr"></div>
+      <div class="video-corner vc-bl"></div><div class="video-corner vc-br"></div>
     </div>
-    <iframe
-      src="https://em.iq.com/player.html?id=c60drvfn8k&sh_pltf=4"
-      width="640"
-      height="360"
-      allowfullscreen="true"
-      webkitallowfullscreen="true"
-      mozallowfullscreen="true"
-      style="display:block;border:none;border-radius:2px;">
-    </iframe>
+    <iframe src="https://em.iq.com/player.html?id=c60drvfn8k&sh_pltf=4" width="640" height="360"
+      allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true"
+      style="display:block;border:none;border-radius:2px;"></iframe>
   </div>
   <div class="video-label reveal reveal-delay-3">Your Lie in April — Episode 1 | ดูทาง iQIYI</div>
+</div>
+
+<!-- ══════ EPISODES ══════ -->
+<div id="episodes">
+  <div class="eps-inner">
+    <div class="reveal">
+      <div class="story-tag">// สรุปเนื้อหา</div>
+      <h2 class="section-title">เรื่องราว Episode<br><em>1 – 22</em></h2>
+      <p class="body-text" style="max-width:600px">สรุปย่อทุกตอน — กดเพื่อดูสปอยล์ที่ซ่อนไว้</p>
+    </div>
+    <div class="eps-grid" id="eps-grid">
+      <!-- JS injects episodes -->
+    </div>
+  </div>
 </div>
 
 <!-- ══════ CHARACTERS ══════ -->
@@ -965,30 +650,45 @@ footer::before {
   </div>
 </section>
 
-<!-- STATS BAND -->
+<!-- STATS -->
 <div class="stats-band">
   <div class="stats-inner">
+    <div class="reveal"><div class="stat-num">22<span>+</span></div><div class="stat-label">ตอน</div></div>
+    <div class="reveal reveal-delay-1"><div class="stat-num">8<span>.</span>6</div><div class="stat-label">คะแนน MyAnimeList</div></div>
+    <div class="reveal reveal-delay-2"><div class="stat-num">2014<span>–</span>15</div><div class="stat-label">ออกอากาศ</div></div>
+    <div class="reveal reveal-delay-3"><div class="stat-num">∞</div><div class="stat-label">น้ำตาที่หลั่งไหล</div></div>
+  </div>
+</div>
+
+<!-- ══════ KAORI'S LETTER ══════ -->
+<div id="letter">
+  <div class="letter-inner">
     <div class="reveal">
-      <div class="stat-num">22<span>+</span></div>
-      <div class="stat-label">ตอน</div>
+      <div class="story-tag">// จดหมายของคาโอริ</div>
+      <h2 class="section-title" style="color:var(--cream)">จดหมายที่<em style="color:var(--sakura)">ทำแตกสลาย</em></h2>
+      <p class="body-text" style="color:rgba(253,248,242,.5);max-width:560px">จดหมายที่ Kaori ฝากไว้ให้ Kousei อ่านหลังจากที่เธอจากไปแล้ว — ความจริงที่ซ่อนไว้ตลอดทั้งเรื่อง</p>
     </div>
-    <div class="reveal reveal-delay-1">
-      <div class="stat-num">8<span>.</span>6</div>
-      <div class="stat-label">คะแนน MyAnimeList</div>
-    </div>
-    <div class="reveal reveal-delay-2">
-      <div class="stat-num">2014<span>–</span>15</div>
-      <div class="stat-label">ออกอากาศ</div>
-    </div>
-    <div class="reveal reveal-delay-3">
-      <div class="stat-num">∞</div>
-      <div class="stat-label">น้ำตาที่หลั่งไหล</div>
+    <div class="letter-paper reveal reveal-delay-2">
+      <div class="letter-header">ฤดูใบไม้ผลิ 2014</div>
+      <div class="letter-greeting">ถึง Kousei ที่รัก</div>
+      <div class="letter-body">
+        <p>ฉันเป็นคนโกหกเธอ</p>
+        <p>แต่ฉันไม่เสียใจเลยสักนิด</p>
+        <p>ความจริงก็คือ... ฉันชอบ Kousei มาตั้งนานแล้ว ตั้งแต่วันที่ได้เห็นเธอเล่นเปียโนครั้งแรกเมื่อตอนประถม ฉันแอบชอบเธอมาตลอด แต่เธอกลับมองไม่เห็นฉันเลย เธอมองเห็นแต่ Tsubaki</p>
+        <p>ฉันจึงคิดแผนขึ้นมา — ฉันจะแกล้งทำเป็นว่าชอบ Watari เพื่อเข้าใกล้เธอ เพื่อให้เธอได้เห็นฉัน แม้จะเพียงครู่เดียว</p>
+        <p>แต่เธอรู้ไหม? สิ่งที่ฉันได้รับกลับมา มันมากกว่าที่ฉันเคยฝันไว้เสียอีก เธอทำให้ฉันมีความสุขจริงๆ ในช่วงเวลาสุดท้ายของชีวิต</p>
+        <p>ฉันรู้ว่าตัวเองป่วยหนักมาก รู้ว่าเวลาของฉันมีจำกัด ฉันจึงตัดสินใจที่จะ "เล่น" อย่างเต็มที่ — เล่นดนตรี เล่นกับชีวิต และเล่นกับหัวใจของฉันเอง</p>
+        <p>ขอบคุณที่อยู่เคียงข้างฉัน ขอบคุณที่จับมือฉันไว้ ขอบคุณที่เล่นเพลงพร้อมกับฉัน</p>
+        <p>Kousei Arima... ฉันรักเธอ</p>
+      </div>
+      <div class="letter-sign">Kaori Miyazono 🌸</div>
+      <div class="letter-sakura">🌸</div>
     </div>
   </div>
 </div>
 
-<!-- ══════ MUSIC ══════ -->
-<div id="music">
+<!-- ══════ MUSIC PLAYLIST ══════ -->
+<div id="music-section">
   <div class="music-inner">
     <div class="reveal">
       <div class="story-tag">// ดนตรีประกอบ</div>
@@ -998,115 +698,67 @@ footer::before {
     <div class="playlist">
       <div class="track reveal reveal-delay-1" onclick="setPlaying(this)">
         <div class="track-num">01</div>
-        <div class="track-info">
-          <div class="track-title">Hikaru nara (光るなら)</div>
-          <div class="track-artist">Goose house</div>
-        </div>
+        <div class="track-info"><div class="track-title">Hikaru nara (光るなら)</div><div class="track-artist">Goose house</div></div>
         <div class="track-bars"><div class="bar-anim"></div><div class="bar-anim"></div><div class="bar-anim"></div></div>
-        <span class="track-type type-op">Opening</span>
+        <span class="track-type type-op">Opening 1</span>
       </div>
       <div class="track reveal reveal-delay-1" onclick="setPlaying(this)">
         <div class="track-num">02</div>
-        <div class="track-info">
-          <div class="track-title">Watashi no Uso (私の嘘)</div>
-          <div class="track-artist">Masaru Yokoyama</div>
-        </div>
+        <div class="track-info"><div class="track-title">Watashi no Uso (私の嘘)</div><div class="track-artist">Masaru Yokoyama</div></div>
         <div class="track-bars"><div class="bar-anim"></div><div class="bar-anim"></div><div class="bar-anim"></div></div>
         <span class="track-type type-ins">Instrumental</span>
       </div>
       <div class="track reveal reveal-delay-2" onclick="setPlaying(this)">
         <div class="track-num">03</div>
-        <div class="track-info">
-          <div class="track-title">Natsukage (夏影)</div>
-          <div class="track-artist">Aioi Band</div>
-        </div>
+        <div class="track-info"><div class="track-title">Natsukage (夏影)</div><div class="track-artist">Aioi Band</div></div>
         <div class="track-bars"><div class="bar-anim"></div><div class="bar-anim"></div><div class="bar-anim"></div></div>
-        <span class="track-type type-ed">Ending</span>
+        <span class="track-type type-ed">Ending 1</span>
       </div>
       <div class="track reveal reveal-delay-2" onclick="setPlaying(this)">
         <div class="track-num">04</div>
-        <div class="track-info">
-          <div class="track-title">Chopin — Ballade No. 1</div>
-          <div class="track-artist">Frédéric Chopin</div>
-        </div>
+        <div class="track-info"><div class="track-title">Chopin — Ballade No. 1 in G minor</div><div class="track-artist">Frédéric Chopin</div></div>
         <div class="track-bars"><div class="bar-anim"></div><div class="bar-anim"></div><div class="bar-anim"></div></div>
         <span class="track-type type-ins">Classical</span>
       </div>
       <div class="track reveal reveal-delay-3" onclick="setPlaying(this)">
         <div class="track-num">05</div>
-        <div class="track-info">
-          <div class="track-title">Kirameki (きらめき)</div>
-          <div class="track-artist">Masaru Yokoyama</div>
-        </div>
+        <div class="track-info"><div class="track-title">Kirameki (きらめき)</div><div class="track-artist">Masaru Yokoyama</div></div>
         <div class="track-bars"><div class="bar-anim"></div><div class="bar-anim"></div><div class="bar-anim"></div></div>
         <span class="track-type type-ins">Instrumental</span>
       </div>
       <div class="track reveal reveal-delay-3" onclick="setPlaying(this)">
         <div class="track-num">06</div>
-        <div class="track-info">
-          <div class="track-title">Orange (オレンジ)</div>
-          <div class="track-artist">7!!</div>
-        </div>
+        <div class="track-info"><div class="track-title">Orange (オレンジ)</div><div class="track-artist">7!!</div></div>
         <div class="track-bars"><div class="bar-anim"></div><div class="bar-anim"></div><div class="bar-anim"></div></div>
         <span class="track-type type-ed">Ending 2</span>
+      </div>
+      <div class="track reveal reveal-delay-4" onclick="setPlaying(this)">
+        <div class="track-num">07</div>
+        <div class="track-info"><div class="track-title">Mozart — Sonata No.11 in A major (Rondo)</div><div class="track-artist">Wolfgang Amadeus Mozart</div></div>
+        <div class="track-bars"><div class="bar-anim"></div><div class="bar-anim"></div><div class="bar-anim"></div></div>
+        <span class="track-type type-ins">Classical</span>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ══════ MOMENTS ══════ -->
+<!-- MOMENTS -->
 <section id="moments">
   <div class="reveal">
     <div class="story-tag">// ช่วงเวลา</div>
     <h2 class="section-title">ฉากที่<em>ทำให้น้ำตาไหล</em></h2>
   </div>
   <div class="moments-grid">
-    <div class="moment reveal reveal-delay-1">
-      <div class="moment-box m1 moment-fill">🎹</div>
-      <div class="moment-overlay">
-        <div class="moment-episode">Episode 01</div>
-        <div class="moment-quote">"เธอทำให้โน้ตของฉันมีสี — ครั้งแรกในรอบหลายปี"</div>
-      </div>
-    </div>
-    <div class="moment reveal reveal-delay-2">
-      <div class="moment-box m2 moment-fill">🌸</div>
-      <div class="moment-overlay">
-        <div class="moment-episode">Episode 05</div>
-        <div class="moment-quote">"เล่นด้วยกันนะ ไม่ว่าจะเกิดอะไรขึ้น"</div>
-      </div>
-    </div>
-    <div class="moment reveal reveal-delay-3">
-      <div class="moment-box m3 moment-fill">🎻</div>
-      <div class="moment-overlay">
-        <div class="moment-episode">Episode 11</div>
-        <div class="moment-quote">"เธอแหกกฎทุกข้อ แต่มันสวยงามมาก"</div>
-      </div>
-    </div>
-    <div class="moment reveal">
-      <div class="moment-box m4 moment-fill">🌙</div>
-      <div class="moment-overlay">
-        <div class="moment-episode">Episode 18</div>
-        <div class="moment-quote">"ฉันโกหกเธอ แต่ความรู้สึกนั้นจริงทุกอย่าง"</div>
-      </div>
-    </div>
-    <div class="moment reveal reveal-delay-1">
-      <div class="moment-box m5 moment-fill">💌</div>
-      <div class="moment-overlay">
-        <div class="moment-episode">Episode 22</div>
-        <div class="moment-quote">"บทเพลงสุดท้ายนี้... ฉันเล่นเพื่อเธอ"</div>
-      </div>
-    </div>
-    <div class="moment reveal reveal-delay-2">
-      <div class="moment-box m6 moment-fill">🌅</div>
-      <div class="moment-overlay">
-        <div class="moment-episode">Finale</div>
-        <div class="moment-quote">"ขอบคุณที่ทำให้ฉันกลับมาเล่นดนตรีอีกครั้ง"</div>
-      </div>
-    </div>
+    <div class="moment reveal reveal-delay-1"><div class="moment-box m1 moment-fill">🎹</div><div class="moment-overlay"><div class="moment-episode">Episode 01</div><div class="moment-quote">"เธอทำให้โน้ตของฉันมีสี"</div></div></div>
+    <div class="moment reveal reveal-delay-2"><div class="moment-box m2 moment-fill">🌸</div><div class="moment-overlay"><div class="moment-episode">Episode 05</div><div class="moment-quote">"เล่นด้วยกันนะ ไม่ว่าจะเกิดอะไรขึ้น"</div></div></div>
+    <div class="moment reveal reveal-delay-3"><div class="moment-box m3 moment-fill">🎻</div><div class="moment-overlay"><div class="moment-episode">Episode 11</div><div class="moment-quote">"เธอแหกกฎทุกข้อ แต่มันสวยงามมาก"</div></div></div>
+    <div class="moment reveal"><div class="moment-box m4 moment-fill">🌙</div><div class="moment-overlay"><div class="moment-episode">Episode 18</div><div class="moment-quote">"ฉันโกหกเธอ แต่ความรู้สึกนั้นจริงทุกอย่าง"</div></div></div>
+    <div class="moment reveal reveal-delay-1"><div class="moment-box m5 moment-fill">💌</div><div class="moment-overlay"><div class="moment-episode">Episode 22</div><div class="moment-quote">"บทเพลงสุดท้ายนี้... ฉันเล่นเพื่อเธอ"</div></div></div>
+    <div class="moment reveal reveal-delay-2"><div class="moment-box m6 moment-fill">🌅</div><div class="moment-overlay"><div class="moment-episode">Finale</div><div class="moment-quote">"ขอบคุณที่ทำให้ฉันกลับมาเล่นดนตรีอีกครั้ง"</div></div></div>
   </div>
 </section>
 
-<!-- SECOND QUOTE -->
+<!-- CLOSING QUOTE -->
 <div class="quote-band">
   <p class="quote-text">"คุณจะอยู่ในหัวใจฉันตลอดไป<br>เหมือนดั่งบทเพลงที่ไม่มีวันลืม"</p>
   <p class="quote-src">— จดหมายของ Kaori</p>
@@ -1117,107 +769,263 @@ footer::before {
   <div class="footer-inner">
     <div>
       <div class="footer-brand">Your Lie in April</div>
-      <p class="footer-tagline">
-        อนิเมะที่สอนให้รู้ว่า ดนตรีไม่ใช่แค่เสียง —<br>
-        มันคือวิธีที่คนเราบอกความรู้สึกที่พูดออกมาไม่ได้
-      </p>
+      <p class="footer-tagline">อนิเมะที่สอนให้รู้ว่า ดนตรีไม่ใช่แค่เสียง — มันคือวิธีที่คนเราบอกความรู้สึกที่พูดออกมาไม่ได้</p>
     </div>
     <div>
       <div class="footer-section-title">หน้า</div>
-      <span class="footer-link" onclick="document.getElementById('story').scrollIntoView({behavior:'smooth'})">เรื่องราว</span>
-      <span class="footer-link" onclick="document.getElementById('watch').scrollIntoView({behavior:'smooth'})">ดูอนิเมะ</span>
-      <span class="footer-link" onclick="document.getElementById('characters').scrollIntoView({behavior:'smooth'})">ตัวละคร</span>
-      <span class="footer-link" onclick="document.getElementById('music').scrollIntoView({behavior:'smooth'})">ดนตรี</span>
+      <span class="footer-link" onclick="scrollTo('story')">เรื่องราว</span>
+      <span class="footer-link" onclick="scrollTo('watch')">ดูอนิเมะ</span>
+      <span class="footer-link" onclick="scrollTo('episodes')">ตอน 1–22</span>
+      <span class="footer-link" onclick="scrollTo('characters')">ตัวละคร</span>
+      <span class="footer-link" onclick="scrollTo('letter')">จดหมาย</span>
     </div>
     <div>
       <div class="footer-section-title">ข้อมูล</div>
       <span class="footer-link">Studio: A-1 Pictures</span>
       <span class="footer-link">Director: Kyohei Ishiguro</span>
       <span class="footer-link">Manga: Naoshi Arakawa</span>
-      <span class="footer-link">Episodes: 22 ตอน</span>
+      <span class="footer-link">Episodes: 22 ตอน (2014–15)</span>
     </div>
   </div>
   <div class="footer-bottom">
-    <span>© 2025 Your Lie in April Fan Site — ทำด้วยความรัก 🌸</span>
-    <span><span class="footer-sakura">🌸</span> A-1 Pictures / Naoshi Arakawa</span>
+    <span>© 2025 Your Lie in April Fan Site — ทำด้วยความรักและน้ำตา 🌸</span>
+    <span>© A-1 Pictures / Naoshi Arakawa</span>
   </div>
 </footer>
 
 <script>
-// ── CURSOR ──
+// ─────────────────────────────────────────────
+// EPISODE DATA
+// ─────────────────────────────────────────────
+const episodes = [
+  { num:1,  title:"Monotone / Colorful",    body:"Kousei Arima อดีตนักเปียโนเด็กอัจฉริยะ ใช้ชีวิตอย่างไร้สีสัน จนกระทั่งเพื่อนพาไปพบ Kaori Miyazono นักไวโอลินสาวที่เต็มไปด้วยพลังงาน", spoiler:"Kousei ได้ยินเสียงไวโอลินของ Kaori แล้วรู้สึกว่าโลกเปลี่ยนสีไปทันที" },
+  { num:2,  title:"Friend A",               body:"Kousei ถูกขอให้เป็นนักเปียโนคู่ให้ Kaori ในการแข่งขัน แม้เขาจะปฏิเสธซ้ำแล้วซ้ำเล่า แต่ Kaori ก็ไม่ยอมรับคำปฏิเสธ", spoiler:"Kaori กำลังวางแผนที่จะดึง Kousei กลับมาสู่โลกดนตรีโดยเฉพาะ" },
+  { num:3,  title:"Inside Spring",          body:"Kousei กลับขึ้นเวทีแข่งขันเป็นครั้งแรกในรอบหลายปี ความกังวลและความกลัวท่วมหัว", spoiler:"เขาได้ยินเสียงของแม่ขณะเล่นเปียโน และหยุดเล่นกลางคัน ทำให้การแข่งขันต้องหยุดชะงัก" },
+  { num:4,  title:"The Journey",            body:"แม้จะพลาดครั้งใหญ่ แต่ Kaori ยังคงยืนหยัดเล่นไวโอลินของเธออย่างอิสระ ผิดกติกาการแข่งขัน แต่งดงามที่สุดในห้อง", spoiler:"ผู้ตัดสินให้ตกรอบ แต่ Kaori ยิ้มและบอกว่า 'ฉันเล่นเพื่อตัวเอง ไม่ใช่เพื่อชนะ'" },
+  { num:5,  title:"Twinkle Little Star",    body:"Kousei เริ่มฝึกซ้อมร่วมกับ Kaori อย่างจริงจัง ทั้งสองค่อยๆ เข้าใกล้กันมากขึ้น", spoiler:"Kaori ล้มป่วยระหว่างซ้อม แต่ซ่อนอาการไว้ไม่ให้ใครรู้" },
+  { num:6,  title:"Footsteps",              body:"Tsubaki เริ่มตระหนักถึงความรู้สึกที่ตัวเองมีต่อ Kousei มาโดยตลอด ขณะที่เขากลับสนใจแต่ Kaori", spoiler:"Tsubaki ร้องไห้คนเดียวเพราะรู้ว่าตัวเองไม่สำคัญสำหรับ Kousei เท่า Kaori" },
+  { num:7,  title:"Overlapping Waves",      body:"Kousei พบกับ Takeshi Aiza คู่แข่งเก่าที่ยังคงไล่ตามเขาอยู่เสมอ ทำให้เขานึกถึงอดีตอันเจ็บปวด", spoiler:"Kousei เห็นตัวเองในวัยเด็กที่ถูกแม่ทำร้าย แต่ก็เป็นแม่คนเดียวกันที่สอนให้เขารักดนตรี" },
+  { num:8,  title:"Let It Ring",            body:"Emi Igawa อีกคู่แข่งเก่าของ Kousei เผยให้เห็นว่าเธอก็รักดนตรีเพราะ Kousei เช่นกัน", spoiler:"ทั้ง Takeshi และ Emi ต่างเล่นดนตรีเพื่อ 'ไล่ตาม' Kousei ที่อยู่ข้างหน้าพวกเขาเสมอ" },
+  { num:9,  title:"Resonance",              body:"Kousei ต้องตัดสินใจว่าจะกลับไปแข่งขันอีกครั้งหรือไม่ ขณะที่ Kaori เข้าโรงพยาบาลอีกครั้ง", spoiler:"Kaori รู้ตัวว่าโรคของเธอกำลังแย่ลงเรื่อยๆ แต่ยังยิ้มให้ Kousei อยู่เสมอ" },
+  { num:10, title:"Goodbye, Hero",          body:"Kousei ไปเยี่ยม Kaori ที่โรงพยาบาล และทั้งคู่ก็ใช้เวลาร่วมกันอย่างเรียบง่ายแต่งดงาม", spoiler:"Kaori พูดว่า 'ฉันอยากไปดูทะเลด้วยกัน' — ซึ่งนั่นเป็นความฝันที่เธอรู้ว่าอาจไม่มีโอกาสได้ทำจริง" },
+  { num:11, title:"Light of Life",          body:"ทั้งสองได้แสดงร่วมกันบนเวทีอีกครั้ง และบทเพลงที่พวกเขาเล่นก็เต็มไปด้วยชีวิตและความรู้สึก", spoiler:"ในขณะที่เล่น Kousei มองเห็น Kaori ค่อยๆ เลือนหายไปเหมือนภาพลวงตา" },
+  { num:12, title:"My Lie",                 body:"Kousei ค้นพบว่าตัวเองมีความรู้สึกต่อ Kaori มากกว่าแค่เพื่อน แต่ก็ไม่กล้าบอก", spoiler:"Kousei ร้องไห้คนเดียวหลังรู้ว่า Kaori ป่วยหนักกว่าที่คิด" },
+  { num:13, title:"Childhood",              body:"เรื่องราวของ Kousei กับแม่ถูกเล่าอย่างละเอียด ความทรงจำที่เจ็บปวดและรักพร้อมกัน", spoiler:"แม่ของ Kousei รู้ว่าตัวเองจะตาย จึงผลักเขาอย่างโหดเหี้ยม แต่เพราะอยากให้เขาอยู่รอดได้ด้วยตัวเอง" },
+  { num:14, title:"Footsteps of Spring",   body:"Kousei ตัดสินใจกลับไปแข่งขันเปียโนอีกครั้ง ด้วยแรงบันดาลใจจาก Kaori", spoiler:"เขาเล่นเพื่อ Kaori อย่างชัดเจน — ไม่ใช่เพื่อแม่หรือใครอีกแล้ว" },
+  { num:15, title:"Liar",                   body:"Kaori อาการหนักขึ้นและต้องผ่าตัดใหญ่ Kousei พยายามรักษาความสัมพันธ์ทุกอย่างไว้ให้ดี", spoiler:"Kaori บอก Kousei ว่า 'ฉันโกหกเธอ' — แต่ยังไม่เปิดเผยว่าโกหกเรื่องอะไร" },
+  { num:16, title:"Two of a Kind",          body:"ทั้ง Takeshi และ Emi ต่างแสดงฝีมือสุดยอดในการแข่งขัน แต่ต่างก็เล่นเพื่อ Kousei", spoiler:"ผู้ชมสังเกตว่าบทเพลงของทั้งคู่ล้วนพูดถึง Kousei ที่หายไป" },
+  { num:17, title:"Twilight",               body:"Kousei เล่นเปียโนบนเวทีแข่งขัน และครั้งนี้เขาเล่นแบบ 'ตัวเอง' ไม่ใช่ตามที่แม่สอน", spoiler:"เขามองเห็นภาพของ Kaori นั่งอยู่บนเวทีข้างๆ เขาขณะที่เล่น แม้ Kaori อยู่ในโรงพยาบาล" },
+  { num:18, title:"Hearts Come Together",  body:"Kaori ดูถ่ายทอดสดการแข่งขันจากโรงพยาบาล น้ำตาไหล และรู้สึกว่าตัวเองอยู่บนเวทีกับเขาจริงๆ", spoiler:"หมอบอกว่าโอกาสรอดชีวิตหลังผ่าตัดของ Kaori นั้นต่ำมาก" },
+  { num:19, title:"Spring Wind",            body:"Kousei ผ่านการแข่งขันได้อย่างงดงาม แต่กลับไม่ดีใจ เพราะความกังวลเรื่อง Kaori ครอบงำใจอยู่", spoiler:"Tsubaki สารภาพรักกับ Kousei — แต่เขาไม่สามารถตอบรับได้" },
+  { num:20, title:"Hand in Hand",           body:"Kousei ไปเยี่ยม Kaori ที่โรงพยาบาลก่อนผ่าตัด ทั้งสองจับมือและพูดคุยเรื่องราวต่างๆ อย่างสงบ", spoiler:"Kaori กระซิบบอก Kousei ว่า 'ฉันขอโทษ' และ 'ขอบคุณ' แต่ไม่ได้อธิบายเพิ่มเติม" },
+  { num:21, title:"Goodbye",               body:"วันที่ Kousei แสดงคอนเสิร์ตครั้งสุดท้าย เขาเล่นราวกับว่า Kaori นั่งเล่นไวโอลินอยู่ข้างๆ เขา", spoiler:"ขณะที่ Kousei เล่นอยู่บนเวที Kaori ก็เสียชีวิตในโรงพยาบาล" },
+  { num:22, title:"Spring Wind (Finale)",  body:"Kousei ได้รับจดหมายจาก Kaori หลังจากที่เธอจากไป — ทุกความจริงถูกเปิดเผย", spoiler:"จดหมายเปิดเผยว่า Kaori ชอบ Kousei มาตลอด ไม่ใช่ Watari การที่เธอทำทุกอย่างก็เพื่อเข้าใกล้เขา และขอบคุณที่ทำให้ช่วงสุดท้ายของชีวิตเธอสวยงามที่สุด" },
+];
+
+// Render episodes
+const grid = document.getElementById('eps-grid');
+episodes.forEach((ep, i) => {
+  const div = document.createElement('div');
+  div.className = 'ep-card reveal' + (i % 4 > 0 ? ' reveal-delay-' + (i % 3 + 1) : '');
+  div.innerHTML = `
+    <div class="ep-header">
+      <div class="ep-num">Episode ${String(ep.num).padStart(2,'0')}</div>
+      <div class="ep-title">${ep.title}</div>
+    </div>
+    <div class="ep-body">
+      ${ep.body}
+      <div class="ep-spoiler-wrap">
+        <span class="ep-spoiler-toggle" onclick="toggleSpoiler(this)">
+          👁 เปิดสปอยล์
+        </span>
+        <div class="ep-spoiler">${ep.spoiler}</div>
+      </div>
+    </div>`;
+  grid.appendChild(div);
+});
+
+function toggleSpoiler(btn) {
+  const sp = btn.nextElementSibling;
+  sp.classList.toggle('revealed');
+  btn.textContent = sp.classList.contains('revealed') ? '🙈 ซ่อนสปอยล์' : '👁 เปิดสปอยล์';
+}
+
+// ─────────────────────────────────────────────
+// CURSOR
+// ─────────────────────────────────────────────
 const cur = document.getElementById('cursor');
 const trail = document.getElementById('cursor-trail');
 let mx=0,my=0;
 document.addEventListener('mousemove', e => {
-  mx = e.clientX; my = e.clientY;
-  cur.style.left = mx + 'px';
-  cur.style.top  = my + 'px';
-  setTimeout(() => {
-    trail.style.left = mx + 'px';
-    trail.style.top  = my + 'px';
-  }, 80);
+  mx=e.clientX; my=e.clientY;
+  cur.style.left=mx+'px'; cur.style.top=my+'px';
+  setTimeout(()=>{ trail.style.left=mx+'px'; trail.style.top=my+'px'; }, 80);
 });
-document.querySelectorAll('a,button,.track,.char-card,.moment,.nav-link,.footer-link').forEach(el => {
-  el.addEventListener('mouseenter', () => {
-    cur.style.width = '28px'; cur.style.height = '28px';
-    cur.style.background = 'rgba(212,80,106,.12)';
-  });
-  el.addEventListener('mouseleave', () => {
-    cur.style.width = '14px'; cur.style.height = '14px';
-    cur.style.background = 'transparent';
-  });
+document.querySelectorAll('a,button,.track,.char-card,.moment,.nav-link,.footer-link,.ep-card').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{ cur.style.width='28px'; cur.style.height='28px'; cur.style.background='rgba(212,80,106,.12)'; });
+  el.addEventListener('mouseleave',()=>{ cur.style.width='14px'; cur.style.height='14px'; cur.style.background='transparent'; });
 });
 
-// ── NAV SCROLL ──
-window.addEventListener('scroll', () => {
-  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 60);
+// ─────────────────────────────────────────────
+// NAV + SCROLL REVEAL
+// ─────────────────────────────────────────────
+window.addEventListener('scroll', ()=>{ 
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY>60);
   revealCheck();
 });
-
-// ── SCROLL REVEAL ──
-function revealCheck() {
-  document.querySelectorAll('.reveal').forEach(el => {
-    if (el.getBoundingClientRect().top < window.innerHeight - 80)
-      el.classList.add('visible');
+function revealCheck(){
+  document.querySelectorAll('.reveal').forEach(el=>{
+    if(el.getBoundingClientRect().top < window.innerHeight-70) el.classList.add('visible');
   });
 }
 revealCheck();
+function scrollTo(id){ document.getElementById(id)?.scrollIntoView({behavior:'smooth'}); }
 
-// ── PLAYLIST ──
+// ─────────────────────────────────────────────
+// MUSIC PLAYER
+// ─────────────────────────────────────────────
+const audio = document.getElementById('audio-player');
+let playerVisible = true;
+let isPlaying = false;
+
+function loadMp3(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  audio.src = url;
+  audio.load();
+  const drop = document.getElementById('mp3-drop');
+  drop.textContent = '✓ โหลด ' + file.name + ' แล้ว — กด ▶ เพื่อเล่น';
+  drop.classList.add('loaded');
+  audio.addEventListener('loadedmetadata', ()=>{
+    document.getElementById('time-total').textContent = fmtTime(audio.duration);
+  });
+}
+
+function togglePlay() {
+  if (!audio.src) { 
+    document.getElementById('mp3-input').click(); return; 
+  }
+  if (isPlaying) { audio.pause(); setPlayState(false); }
+  else { audio.play(); setPlayState(true); }
+}
+
+function setPlayState(playing) {
+  isPlaying = playing;
+  document.getElementById('btn-play').textContent = playing ? '⏸' : '▶';
+  document.getElementById('player-viz').classList.toggle('paused', !playing);
+}
+
+audio.addEventListener('timeupdate', ()=>{
+  if (!audio.duration) return;
+  const pct = (audio.currentTime / audio.duration * 100).toFixed(1);
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('time-cur').textContent = fmtTime(audio.currentTime);
+});
+audio.addEventListener('ended', ()=>setPlayState(false));
+
+function seekAudio(e) {
+  if (!audio.src || !audio.duration) return;
+  const rect = e.currentTarget.getBoundingClientRect();
+  const pct = (e.clientX - rect.left) / rect.width;
+  audio.currentTime = pct * audio.duration;
+}
+
+function fmtTime(s) {
+  if (!s || isNaN(s)) return '0:00';
+  const m = Math.floor(s/60), sec = Math.floor(s%60);
+  return m + ':' + String(sec).padStart(2,'0');
+}
+
+function togglePlayerUI() {
+  playerVisible = !playerVisible;
+  document.getElementById('music-player').classList.toggle('hidden', !playerVisible);
+}
+
+// Show toggle button after scrolling
+window.addEventListener('scroll', ()=>{
+  const tog = document.getElementById('player-toggle');
+  if (window.scrollY > 300) tog.style.display = 'flex';
+  else tog.style.display = 'none';
+});
+
+// ─────────────────────────────────────────────
+// PIANO — Full 2 Octave with Web Audio
+// ─────────────────────────────────────────────
+let audioCtx = null;
+const activeNotes = {};
+
+function getCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playPianoNote(freq, el) {
+  const ctx = getCtx();
+  const osc1 = ctx.createOscillator();
+  const osc2 = ctx.createOscillator();
+  const osc3 = ctx.createOscillator();
+  const gainNode = ctx.createGain();
+  const filter = ctx.createBiquadFilter();
+
+  filter.type = 'lowpass';
+  filter.frequency.value = 4000;
+
+  osc1.type = 'triangle';  osc1.frequency.value = freq;
+  osc2.type = 'sine';      osc2.frequency.value = freq * 2;
+  osc3.type = 'sine';      osc3.frequency.value = freq * 3;
+
+  const g1 = ctx.createGain(); g1.gain.value = 0.5;
+  const g2 = ctx.createGain(); g2.gain.value = 0.2;
+  const g3 = ctx.createGain(); g3.gain.value = 0.05;
+
+  osc1.connect(g1); osc2.connect(g2); osc3.connect(g3);
+  g1.connect(filter); g2.connect(filter); g3.connect(filter);
+  filter.connect(gainNode);
+  gainNode.connect(ctx.destination);
+
+  gainNode.gain.setValueAtTime(0, ctx.currentTime);
+  gainNode.gain.linearRampToValueAtTime(0.6, ctx.currentTime + 0.01);
+  gainNode.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + 0.1);
+  gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2.0);
+
+  osc1.start(); osc2.start(); osc3.start();
+  osc1.stop(ctx.currentTime + 2.1);
+  osc2.stop(ctx.currentTime + 2.1);
+  osc3.stop(ctx.currentTime + 2.1);
+
+  if (el) {
+    el.classList.add('pressed');
+    setTimeout(()=>el.classList.remove('pressed'), 200);
+  }
+}
+
+// Attach click to all keys
+document.querySelectorAll('.key-w, .key-b').forEach(k => {
+  k.addEventListener('mousedown', ()=>{ playPianoNote(parseFloat(k.dataset.freq), k); });
+});
+
+// Keyboard mapping (2 octaves)
+const keyMap = {
+  'a':'C4','w':'Cs4','s':'D4','e':'Ds4','d':'E4','f':'F4',
+  't':'Fs4','g':'G4','y':'Gs4','h':'A4','u':'As4','j':'B4',
+  'k':'C5','o':'Cs5','l':'D5','p':'Ds5',';':'E5',"'":'F5'
+};
+document.addEventListener('keydown', e => {
+  if (e.repeat) return;
+  const note = keyMap[e.key.toLowerCase()];
+  if (!note) return;
+  const el = document.querySelector(`[data-note="${note}"]`);
+  if (el) { playPianoNote(parseFloat(el.dataset.freq), el); }
+});
+
+// ─────────────────────────────────────────────
+// PLAYLIST
+// ─────────────────────────────────────────────
 function setPlaying(el) {
-  document.querySelectorAll('.track').forEach(t => t.classList.remove('playing'));
+  document.querySelectorAll('.track').forEach(t=>t.classList.remove('playing'));
   el.classList.add('playing');
 }
-
-// ── PIANO (Web Audio API) ──
-let audioCtx = null;
-const freqs = [261.63,277.18,293.66,311.13,329.63,349.23,369.99,392,415.3,440,466.16,493.88];
-function playNote(el, idx) {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.connect(gain); gain.connect(audioCtx.destination);
-  osc.type = 'triangle';
-  osc.frequency.value = freqs[idx] || 440;
-  gain.gain.setValueAtTime(.5, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(.001, audioCtx.currentTime + 1.2);
-  osc.start(); osc.stop(audioCtx.currentTime + 1.2);
-  el.style.background = el.classList.contains('key-black')
-    ? '#3d2d20' : 'rgba(255,183,197,.4)';
-  setTimeout(() => {
-    el.style.background = el.classList.contains('key-black')
-      ? '' : '';
-  }, 300);
-}
-
-// ── SMOOTH SCROLL (nav links) ──
-document.querySelectorAll('a.nav-link[href^="#"]').forEach(a => {
-  a.addEventListener('click', e => {
-    e.preventDefault();
-    const t = document.querySelector(a.getAttribute('href'));
-    if (t) t.scrollIntoView({ behavior: 'smooth' });
-  });
-});
 </script>
 </body>
 </html>
