@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Lie in April — 四月は君の嘘</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Noto+Sans+Thai:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream: #fdf8f2;
+  --warm: #f5ead8;
+  --rose: #e8a0a0;
+  --blush: #f2c4b8;
+  --sakura: #ffb7c5;
+  --gold: #c9965a;
+  --ink: #1a1410;
+  --ink2: #2d2118;
+  --brown: #6b4c35;
+  --muted: #9a8070;
+  --accent: #d4506a;
+  --sky: #7fb3d3;
+  --piano: #e8ddd0;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--cream);
+  color: var(--ink);
+  font-family: 'Cormorant Garamond', serif;
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* ── CUSTOM CURSOR ── */
+#cursor {
+  width: 14px; height: 14px;
+  border: 1.5px solid var(--accent);
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%,-50%);
+  transition: transform .15s ease, width .2s, height .2s, background .2s;
+  mix-blend-mode: multiply;
+}
+#cursor-trail {
+  width: 6px; height: 6px;
+  background: var(--sakura);
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%,-50%);
+  transition: left .08s, top .08s;
+  opacity: .6;
+}
+body:hover #cursor { width: 12px; height: 12px; }
+
+/* ── MUSIC NOTES FLOAT ── */
+.note {
+  position: fixed;
+  font-size: 1.2rem;
+  pointer-events: none;
+  z-index: 1;
+  animation: floatNote linear infinite;
+  opacity: 0;
+  color: var(--gold);
+}
+@keyframes floatNote {
+  0%   { transform: translateY(100vh) rotate(0deg); opacity:0; }
+  10%  { opacity: .35; }
+  90%  { opacity: .2; }
+  100% { transform: translateY(-20vh) rotate(360deg); opacity:0; }
+}
+
+/* ── HERO ── */
+#hero {
+  min-height: 100vh;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 60% 30%, rgba(255,183,197,.25) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 50% at 20% 80%, rgba(201,150,90,.12) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 40% at 80% 70%, rgba(127,179,211,.15) 0%, transparent 60%),
+    var(--cream);
+}
+
+/* Staff lines */
+.staff-lines {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: .08;
+}
+.staff-line {
+  position: absolute;
+  width: 200%;
+  height: 1px;
+  background: var(--brown);
+  left: -50%;
+}
+
+/* Sakura petals */
+.petal {
+  position: absolute;
+  width: 10px; height: 13px;
+  background: linear-gradient(135deg, #ffccd5, #ffb7c5);
+  border-radius: 50% 0 50% 0;
+  pointer-events: none;
+  animation: petalFall linear infinite;
+  opacity: 0;
+}
+@keyframes petalFall {
+  0%   { transform: translateY(-5%) translateX(0) rotate(0deg); opacity:0; }
+  10%  { opacity: .7; }
+  85%  { opacity: .4; }
+  100% { transform: translateY(105vh) translateX(80px) rotate(720deg); opacity:0; }
+}
+
+.hero-content {
+  position: relative;
+  z-index: 5;
+  text-align: center;
+  padding: 40px 20px;
+  animation: heroReveal 1.8s cubic-bezier(.2,1,.3,1) both;
+}
+@keyframes heroReveal {
+  from { opacity:0; transform: translateY(40px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+
+.hero-jp {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  color: var(--muted);
+  letter-spacing: .4em;
+  margin-bottom: 16px;
+  animation: heroReveal 1.8s .2s both;
+}
+.hero-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(3rem, 9vw, 7rem);
+  font-weight: 900;
+  line-height: .95;
+  color: var(--ink);
+  position: relative;
+}
+.hero-title em {
+  font-style: italic;
+  color: var(--accent);
+  display: block;
+}
+.hero-sub {
+  font-size: clamp(1rem, 2vw, 1.3rem);
+  color: var(--muted);
+  margin-top: 20px;
+  font-style: italic;
+  letter-spacing: .08em;
+  animation: heroReveal 1.8s .5s both;
+}
+.hero-line {
+  width: 120px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  margin: 24px auto;
+  animation: heroReveal 1.8s .4s both;
+}
+
+.hero-scroll {
+  position: absolute;
+  bottom: 40px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; flex-direction: column;
+  align-items: center; gap: 8px;
+  color: var(--muted); font-size: .75rem;
+  letter-spacing: .2em; text-transform: uppercase;
+  animation: fadeUp 2s 1.5s both;
+  cursor: pointer;
+}
+@keyframes fadeUp {
+  from { opacity:0; transform: translateX(-50%) translateY(10px); }
+  to   { opacity:1; transform: translateX(-50%) translateY(0); }
+}
+.scroll-arrow {
+  width: 20px; height: 20px;
+  border-right: 1px solid var(--muted);
+  border-bottom: 1px solid var(--muted);
+  transform: rotate(45deg);
+  animation: bounce .9s ease-in-out infinite alternate;
+}
+@keyframes bounce { to { transform: rotate(45deg) translateY(5px); } }
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 48px;
+  transition: all .4s;
+}
+nav.scrolled {
+  background: rgba(253,248,242,.92);
+  backdrop-filter: blur(16px);
+  padding: 14px 48px;
+  box-shadow: 0 1px 0 rgba(107,76,53,.1);
+}
+.nav-logo {
+  font-family: 'Playfair Display', serif;
+  font-size: .95rem;
+  font-style: italic;
+  color: var(--ink);
+  letter-spacing: .05em;
+}
+.nav-links { display: flex; gap: 32px; }
+.nav-link {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: .9rem;
+  color: var(--brown);
+  text-decoration: none;
+  letter-spacing: .1em;
+  position: relative;
+  transition: color .2s;
+}
+.nav-link::after {
+  content: '';
+  position: absolute; bottom: -2px; left: 0; right: 0;
+  height: 1px; background: var(--accent);
+  transform: scaleX(0);
+  transition: transform .3s;
+  transform-origin: left;
+}
+.nav-link:hover { color: var(--accent); }
+.nav-link:hover::after { transform: scaleX(1); }
+
+/* ── SECTIONS BASE ── */
+section {
+  padding: 100px 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ── QUOTE BAND ── */
+.quote-band {
+  background: var(--ink);
+  padding: 80px 40px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  margin: 0;
+  max-width: 100%;
+}
+.quote-band::before {
+  content: '""';
+  position: absolute;
+  font-family: 'Playfair Display', serif;
+  font-size: 20rem;
+  color: rgba(255,255,255,.03);
+  top: -60px; left: 20px;
+  line-height: 1;
+}
+.quote-text {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.5rem, 3.5vw, 2.5rem);
+  font-style: italic;
+  color: var(--cream);
+  max-width: 800px;
+  margin: 0 auto 20px;
+  line-height: 1.5;
+  position: relative;
+  z-index: 1;
+}
+.quote-src {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: .9rem;
+  color: var(--gold);
+  letter-spacing: .2em;
+  text-transform: uppercase;
+}
+
+/* ── STORY SECTION ── */
+.story-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+.story-tag {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: .8rem;
+  letter-spacing: .3em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 24px;
+  color: var(--ink);
+}
+.section-title em { font-style: italic; color: var(--accent); }
+.body-text {
+  font-size: 1.1rem;
+  color: var(--brown);
+  line-height: 2;
+  font-weight: 300;
+  margin-bottom: 20px;
+}
+
+.piano-visual {
+  position: relative;
+  height: 360px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.piano-keys {
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
+  position: relative;
+  z-index: 2;
+}
+.key-white {
+  width: 36px; height: 160px;
+  background: linear-gradient(180deg, #f0ece4, #fff);
+  border-radius: 0 0 6px 6px;
+  border: 1px solid rgba(0,0,0,.12);
+  box-shadow: 2px 4px 12px rgba(0,0,0,.15), inset 0 -4px 8px rgba(0,0,0,.05);
+  cursor: pointer;
+  transition: transform .1s, box-shadow .1s;
+  animation: keyPulse 4s ease-in-out infinite;
+}
+.key-black {
+  width: 22px; height: 100px;
+  background: linear-gradient(180deg, #2a1e15, #1a1410);
+  border-radius: 0 0 4px 4px;
+  margin: 0 -11px;
+  position: relative; z-index: 3;
+  box-shadow: 2px 6px 10px rgba(0,0,0,.4);
+  cursor: pointer;
+  transition: transform .1s;
+}
+.key-white:hover { transform: scaleY(1.02); box-shadow: 2px 6px 18px rgba(0,0,0,.2); }
+.key-black:hover { transform: scaleY(1.03) translateY(1px); }
+@keyframes keyPulse {
+  0%,100% { box-shadow: 2px 4px 12px rgba(0,0,0,.15), inset 0 -4px 8px rgba(0,0,0,.05); }
+  50% { box-shadow: 2px 4px 20px rgba(212,80,106,.2), inset 0 -4px 8px rgba(0,0,0,.05); }
+}
+.piano-glow {
+  position: absolute;
+  width: 300px; height: 150px;
+  background: radial-gradient(ellipse, rgba(255,183,197,.4) 0%, transparent 70%);
+  bottom: 60px;
+  animation: glowPulse 3s ease-in-out infinite;
+}
+@keyframes glowPulse { 0%,100% { opacity:.6; } 50% { opacity:1; } }
+
+/* ── VIDEO SECTION ── */
+#watch {
+  background: var(--ink2);
+  padding: 100px 40px;
+  max-width: 100%;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+#watch::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 60% 80% at 50% 50%, rgba(255,183,197,.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+#watch .section-title { color: var(--cream); }
+#watch .story-tag { color: var(--sakura); }
+#watch .body-text { color: rgba(253,248,242,.5); }
+
+.video-frame-wrap {
+  display: inline-block;
+  position: relative;
+  margin-top: 40px;
+  filter: drop-shadow(0 30px 60px rgba(0,0,0,.6));
+}
+.video-border {
+  position: absolute; inset: -12px;
+  border: 1px solid rgba(255,183,197,.2);
+  border-radius: 4px;
+  pointer-events: none;
+}
+.video-border::before {
+  content: '';
+  position: absolute; inset: -8px;
+  border: 1px solid rgba(255,183,197,.08);
+  border-radius: 6px;
+}
+.video-corner {
+  position: absolute;
+  width: 20px; height: 20px;
+  border-color: var(--sakura);
+  border-style: solid;
+  opacity: .6;
+}
+.vc-tl { top:-16px; left:-16px; border-width: 2px 0 0 2px; }
+.vc-tr { top:-16px; right:-16px; border-width: 2px 2px 0 0; }
+.vc-bl { bottom:-16px; left:-16px; border-width: 0 0 2px 2px; }
+.vc-br { bottom:-16px; right:-16px; border-width: 0 2px 2px 0; }
+
+.video-label {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: .75rem;
+  letter-spacing: .3em;
+  color: var(--sakura);
+  text-transform: uppercase;
+  margin-top: 28px;
+  opacity: .7;
+}
+
+/* ── CHARACTERS ── */
+.chars-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin-top: 48px;
+}
+.char-card {
+  text-align: center;
+  padding: 32px 20px;
+  border: 1px solid rgba(107,76,53,.1);
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+  transition: all .35s;
+  cursor: pointer;
+}
+.char-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  opacity: 0;
+  transition: opacity .35s;
+}
+.char-card:hover { transform: translateY(-6px); border-color: rgba(212,80,106,.3); }
+.char-card:hover::before { opacity: 1; }
+.char-kousei::before { background: linear-gradient(135deg, rgba(127,179,211,.08), transparent); }
+.char-kaori::before  { background: linear-gradient(135deg, rgba(255,183,197,.1), transparent); }
+.char-tsubaki::before { background: linear-gradient(135deg, rgba(201,150,90,.08), transparent); }
+.char-watari::before  { background: linear-gradient(135deg, rgba(52,211,153,.06), transparent); }
+
+.char-avatar {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  margin: 0 auto 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem;
+  position: relative;
+}
+.char-avatar::after {
+  content: '';
+  position: absolute; inset: -4px;
+  border-radius: 50%;
+  border: 1px solid;
+  opacity: .3;
+}
+.ca-blue  { background: rgba(127,179,211,.15); }
+.ca-blue::after  { border-color: var(--sky); }
+.ca-pink  { background: rgba(255,183,197,.2); }
+.ca-pink::after  { border-color: var(--sakura); }
+.ca-warm  { background: rgba(201,150,90,.12); }
+.ca-warm::after  { border-color: var(--gold); }
+.ca-green { background: rgba(52,211,153,.1); }
+.ca-green::after { border-color: #34d399; }
+
+.char-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.char-name-jp {
+  font-size: .72rem;
+  color: var(--muted);
+  letter-spacing: .15em;
+  margin-bottom: 12px;
+}
+.char-role {
+  font-size: .78rem;
+  color: var(--accent);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.char-desc {
+  font-size: .88rem;
+  color: var(--brown);
+  line-height: 1.7;
+}
+
+/* ── MUSIC SECTION ── */
+#music {
+  background: linear-gradient(180deg, var(--warm) 0%, var(--cream) 100%);
+  max-width: 100%;
+  padding: 100px 40px;
+}
+.music-inner { max-width: 1200px; margin: 0 auto; }
+.playlist {
+  margin-top: 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.track {
+  display: flex; align-items: center; gap: 20px;
+  padding: 20px 24px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all .25s;
+  position: relative;
+  overflow: hidden;
+}
+.track::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 2px; background: var(--accent);
+  transform: scaleY(0);
+  transition: transform .25s;
+}
+.track:hover { background: rgba(212,80,106,.04); border-color: rgba(212,80,106,.12); }
+.track:hover::before { transform: scaleY(1); }
+.track.playing { background: rgba(212,80,106,.06); border-color: rgba(212,80,106,.2); }
+.track.playing::before { transform: scaleY(1); }
+.track-num {
+  font-family: 'Playfair Display', serif;
+  font-size: .8rem;
+  font-style: italic;
+  color: var(--muted);
+  width: 24px; text-align: center;
+}
+.track-info { flex: 1; }
+.track-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 3px;
+}
+.track-artist { font-size: .82rem; color: var(--muted); }
+.track-type {
+  font-size: .68rem; letter-spacing: .15em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 99px;
+}
+.type-op  { background: rgba(212,80,106,.1); color: var(--accent); border: 1px solid rgba(212,80,106,.2); }
+.type-ed  { background: rgba(127,179,211,.1); color: var(--sky); border: 1px solid rgba(127,179,211,.2); }
+.type-ins { background: rgba(201,150,90,.1); color: var(--gold); border: 1px solid rgba(201,150,90,.2); }
+.track-bars {
+  display: flex; align-items: flex-end; gap: 2px;
+  height: 16px; opacity: 0;
+  transition: opacity .2s;
+}
+.track.playing .track-bars { opacity: 1; }
+.bar-anim {
+  width: 3px;
+  background: var(--accent);
+  border-radius: 1px;
+  animation: barAnim .6s ease-in-out infinite alternate;
+}
+.bar-anim:nth-child(2) { animation-delay: .1s; }
+.bar-anim:nth-child(3) { animation-delay: .2s; }
+@keyframes barAnim { from { height: 4px; } to { height: 14px; } }
+
+/* ── STATS ── */
+.stats-band {
+  background: var(--ink);
+  padding: 80px 40px;
+  max-width: 100%;
+}
+.stats-inner {
+  max-width: 1200px; margin: 0 auto;
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 40px; text-align: center;
+}
+.stat-num {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.5rem,5vw,4rem);
+  font-weight: 900;
+  font-style: italic;
+  color: var(--cream);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.stat-num span { color: var(--accent); }
+.stat-label {
+  font-size: .78rem;
+  color: var(--muted);
+  letter-spacing: .2em;
+  text-transform: uppercase;
+}
+
+/* ── GALLERY / MOMENTS ── */
+.moments-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: auto auto;
+  gap: 16px;
+  margin-top: 48px;
+}
+.moment {
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  transition: transform .35s;
+}
+.moment:hover { transform: scale(1.02); z-index: 2; }
+.moment:hover .moment-overlay { opacity: 1; }
+.moment-box {
+  width: 100%; padding-top: 65%;
+  position: relative;
+  overflow: hidden;
+}
+.moment-fill {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 3rem;
+}
+.m1 { background: linear-gradient(135deg, #7fb3d3, #a8d0e6); }
+.m2 { background: linear-gradient(135deg, #ffb7c5, #ffd4dc); }
+.m3 { background: linear-gradient(135deg, #f5ead8, #e8d5b5); }
+.m4 { background: linear-gradient(135deg, #2d2118, #4a3428); }
+.m5 { background: linear-gradient(135deg, #e8a0a0, #f2b8b8); }
+.m6 { background: linear-gradient(135deg, #c9965a, #d4aa78); }
+
+.moment-overlay {
+  position: absolute; inset: 0;
+  background: rgba(26,20,16,.7);
+  opacity: 0; transition: opacity .35s;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 20px; text-align: center;
+}
+.moment-episode {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: .72rem; letter-spacing: .25em;
+  text-transform: uppercase; color: var(--sakura);
+  margin-bottom: 8px;
+}
+.moment-quote {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: .95rem; color: var(--cream);
+  line-height: 1.5;
+}
+
+/* ── FOOTER ── */
+footer {
+  background: var(--ink);
+  padding: 80px 40px 40px;
+  position: relative;
+  overflow: hidden;
+}
+footer::before {
+  content: '四月は君の嘘';
+  position: absolute;
+  font-family: 'Playfair Display', serif;
+  font-size: 8rem; font-weight: 900;
+  color: rgba(255,255,255,.025);
+  bottom: 20px; right: 40px;
+  white-space: nowrap; pointer-events: none;
+}
+.footer-inner {
+  max-width: 1200px; margin: 0 auto;
+  display: grid; grid-template-columns: 2fr 1fr 1fr;
+  gap: 60px;
+}
+.footer-brand {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.8rem; font-style: italic;
+  color: var(--cream); margin-bottom: 16px;
+}
+.footer-tagline {
+  font-size: .95rem; color: var(--muted);
+  line-height: 1.8; max-width: 320px;
+}
+.footer-section-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: .72rem; letter-spacing: .3em;
+  text-transform: uppercase; color: var(--gold);
+  margin-bottom: 20px;
+}
+.footer-link {
+  display: block; color: var(--muted);
+  font-size: .9rem; text-decoration: none;
+  margin-bottom: 12px; transition: color .2s;
+  cursor: pointer;
+}
+.footer-link:hover { color: var(--cream); }
+.footer-bottom {
+  max-width: 1200px; margin: 60px auto 0;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255,255,255,.06);
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: .78rem; color: rgba(154,128,112,.5);
+}
+.footer-sakura { font-size: 1rem; animation: spin 8s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── WAVE DIVIDER ── */
+.wave {
+  width: 100%; height: 80px;
+  overflow: hidden; line-height: 0;
+}
+.wave svg { display: block; }
+
+/* ── SCROLL REVEAL ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity .8s cubic-bezier(.2,1,.3,1), transform .8s cubic-bezier(.2,1,.3,1);
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: .1s; }
+.reveal-delay-2 { transition-delay: .2s; }
+.reveal-delay-3 { transition-delay: .3s; }
+.reveal-delay-4 { transition-delay: .4s; }
+
+/* ── STICKY NOTE POP ── */
+.sticky-note {
+  position: fixed;
+  bottom: 40px; right: 40px;
+  z-index: 200;
+  width: 200px;
+  background: #fff9c4;
+  padding: 18px;
+  border-radius: 2px;
+  box-shadow: 4px 4px 20px rgba(0,0,0,.15), 0 1px 0 #e6e047 inset;
+  transform: rotate(2deg);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: .9rem;
+  color: #4a3e00;
+  line-height: 1.6;
+  cursor: pointer;
+  transition: transform .3s;
+}
+.sticky-note:hover { transform: rotate(0deg) scale(1.05); }
+.sticky-x {
+  position: absolute; top: 8px; right: 10px;
+  background: none; border: none;
+  color: #9a8000; font-size: 1rem; cursor: pointer;
+}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  nav { padding: 16px 20px; }
+  .nav-links { display: none; }
+  section { padding: 60px 20px; }
+  .story-grid { grid-template-columns:1fr; gap:40px; }
+  .chars-grid { grid-template-columns:1fr 1fr; }
+  .stats-inner { grid-template-columns:1fr 1fr; gap:24px; }
+  .moments-grid { grid-template-columns:1fr 1fr; }
+  .footer-inner { grid-template-columns:1fr; gap:30px; }
+  footer::before { display:none; }
+  .quote-band,.stats-band,#watch,#music { padding: 60px 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Cursor -->
+<div id="cursor"></div>
+<div id="cursor-trail"></div>
+
+<!-- Sticky note -->
+<div class="sticky-note" id="sticky">
+  <button class="sticky-x" onclick="document.getElementById('sticky').remove()">✕</button>
+  <em>"เดือนเมษา..."</em><br>
+  เดือนที่ทุกอย่างเปลี่ยนไปตลอดกาล 🌸
+</div>
+
+<!-- Music notes -->
+<div class="note" style="left:5%;animation-duration:12s;animation-delay:0s;font-size:.9rem">♩</div>
+<div class="note" style="left:15%;animation-duration:15s;animation-delay:3s">♪</div>
+<div class="note" style="left:30%;animation-duration:18s;animation-delay:1s;font-size:1.4rem">♫</div>
+<div class="note" style="left:50%;animation-duration:13s;animation-delay:5s">♬</div>
+<div class="note" style="left:70%;animation-duration:16s;animation-delay:2s;font-size:.85rem">♩</div>
+<div class="note" style="left:85%;animation-duration:14s;animation-delay:7s">♪</div>
+<div class="note" style="left:92%;animation-duration:20s;animation-delay:4s">♫</div>
+
+<!-- Petals -->
+<div class="petal" style="left:10%;animation-duration:8s;animation-delay:0s;width:12px;height:15px"></div>
+<div class="petal" style="left:25%;animation-duration:11s;animation-delay:2s"></div>
+<div class="petal" style="left:40%;animation-duration:9s;animation-delay:4s;width:8px;height:10px"></div>
+<div class="petal" style="left:60%;animation-duration:13s;animation-delay:1s;width:14px;height:17px"></div>
+<div class="petal" style="left:75%;animation-duration:10s;animation-delay:6s"></div>
+<div class="petal" style="left:88%;animation-duration:12s;animation-delay:3s;width:9px;height:11px"></div>
+
+<!-- NAV -->
+<nav id="navbar">
+  <div class="nav-logo">Your Lie in April</div>
+  <div class="nav-links">
+    <a class="nav-link" href="#story">เรื่องราว</a>
+    <a class="nav-link" href="#watch">ดูอนิเมะ</a>
+    <a class="nav-link" href="#characters">ตัวละคร</a>
+    <a class="nav-link" href="#music">ดนตรี</a>
+    <a class="nav-link" href="#moments">ช่วงเวลา</a>
+  </div>
+</nav>
+
+<!-- ══════ HERO ══════ -->
+<div id="hero">
+  <div class="hero-bg"></div>
+
+  <!-- Staff lines -->
+  <div class="staff-lines">
+    <div class="staff-line" style="top:30%"></div>
+    <div class="staff-line" style="top:35%"></div>
+    <div class="staff-line" style="top:40%"></div>
+    <div class="staff-line" style="top:45%"></div>
+    <div class="staff-line" style="top:50%"></div>
+  </div>
+
+  <div class="hero-content">
+    <div class="hero-jp">四月は君の嘘</div>
+    <h1 class="hero-title">
+      Your Lie<br>
+      <em>in April</em>
+    </h1>
+    <div class="hero-line"></div>
+    <p class="hero-sub">ความรัก ดนตรี และบทเพลงสุดท้ายที่ยังก้องอยู่ในใจ</p>
+  </div>
+
+  <div class="hero-scroll" onclick="document.getElementById('story').scrollIntoView({behavior:'smooth'})">
+    <span>เลื่อนลง</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</div>
+
+<!-- QUOTE BAND -->
+<div class="quote-band">
+  <p class="quote-text">"เธอทำให้โลกของฉันมีสี ในช่วงเวลาที่ทุกอย่างมืดหม่น"</p>
+  <p class="quote-src">— Kousei Arima</p>
+</div>
+
+<!-- ══════ STORY ══════ -->
+<section id="story">
+  <div class="story-grid">
+    <div class="reveal">
+      <div class="story-tag">// เรื่องราว</div>
+      <h2 class="section-title">เมื่อดนตรีกลับมา<br><em>พร้อมกับเธอ</em></h2>
+      <p class="body-text">
+        Kousei Arima เคยเป็นนักเปียโนอัจฉริยะ แต่หลังจากการสูญเสียแม่ เขากลับได้ยินแต่เสียงที่ดับสลาย
+        ไม่มีโน้ต ไม่มีบทเพลง เพียงแค่ความเงียบที่กดทับ
+      </p>
+      <p class="body-text">
+        จนกระทั่งวันหนึ่ง <strong>Kaori Miyazono</strong> — นักไวโอลินที่เล่นด้วยหัวใจ
+        ปรากฏตัวขึ้น และพาเขากลับสู่โลกของดนตรีอีกครั้ง
+      </p>
+      <p class="body-text">
+        แต่ฤดูใบไม้ผลิที่งดงามนั้น มาพร้อมกับความจริงที่เจ็บปวดยิ่งกว่าที่ใครจะทนได้...
+      </p>
+    </div>
+    <div class="reveal reveal-delay-2">
+      <div class="piano-visual">
+        <div class="piano-glow"></div>
+        <div class="piano-keys" id="piano-demo">
+          <div class="key-white" onclick="playNote(this,0)"></div>
+          <div class="key-black" onclick="playNote(this,1)"></div>
+          <div class="key-white" onclick="playNote(this,2)"></div>
+          <div class="key-black" onclick="playNote(this,3)"></div>
+          <div class="key-white" onclick="playNote(this,4)"></div>
+          <div class="key-white" onclick="playNote(this,5)"></div>
+          <div class="key-black" onclick="playNote(this,6)"></div>
+          <div class="key-white" onclick="playNote(this,7)"></div>
+          <div class="key-black" onclick="playNote(this,8)"></div>
+          <div class="key-white" onclick="playNote(this,9)"></div>
+          <div class="key-black" onclick="playNote(this,10)"></div>
+          <div class="key-white" onclick="playNote(this,11)"></div>
+        </div>
+        <div style="position:absolute;bottom:40px;font-family:'Cormorant Garamond',serif;
+          font-size:.75rem;color:var(--muted);letter-spacing:.15em;text-transform:uppercase">
+          คลิกเพื่อเล่นโน้ต ♪
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ WATCH ══════ -->
+<div id="watch">
+  <div class="story-tag">// ดูออนไลน์</div>
+  <h2 class="section-title reveal">ชมอนิเมะ<br><em>ตอนแรก</em></h2>
+  <p class="body-text reveal reveal-delay-1" style="max-width:540px;margin:0 auto">
+    สัมผัสเรื่องราวที่จะทำให้หัวใจคุณสั่นไหว — ผ่านเสียงดนตรีและความรู้สึกที่ไม่มีวันลืม
+  </p>
+
+  <div class="video-frame-wrap reveal reveal-delay-2">
+    <div class="video-border">
+      <div class="video-corner vc-tl"></div>
+      <div class="video-corner vc-tr"></div>
+      <div class="video-corner vc-bl"></div>
+      <div class="video-corner vc-br"></div>
+    </div>
+    <iframe
+      src="https://em.iq.com/player.html?id=c60drvfn8k&sh_pltf=4"
+      width="640"
+      height="360"
+      allowfullscreen="true"
+      webkitallowfullscreen="true"
+      mozallowfullscreen="true"
+      style="display:block;border:none;border-radius:2px;">
+    </iframe>
+  </div>
+  <div class="video-label reveal reveal-delay-3">Your Lie in April — Episode 1 | ดูทาง iQIYI</div>
+</div>
+
+<!-- ══════ CHARACTERS ══════ -->
+<section id="characters">
+  <div class="reveal">
+    <div class="story-tag">// ตัวละคร</div>
+    <h2 class="section-title">บุคคลที่<em>เปลี่ยนโลก</em></h2>
+  </div>
+  <div class="chars-grid">
+    <div class="char-card char-kousei reveal reveal-delay-1">
+      <div class="char-avatar ca-blue">🎹</div>
+      <div class="char-name">Kousei Arima</div>
+      <div class="char-name-jp">有馬 公生</div>
+      <div class="char-role">The Human Metronome</div>
+      <div class="char-desc">นักเปียโนอัจฉริยะที่สูญเสียความสามารถในการได้ยินตัวเอง ผู้ที่รอการปลุกชีพอีกครั้ง</div>
+    </div>
+    <div class="char-card char-kaori reveal reveal-delay-2">
+      <div class="char-avatar ca-pink">🎻</div>
+      <div class="char-name">Kaori Miyazono</div>
+      <div class="char-name-jp">宮園 かをり</div>
+      <div class="char-role">Free-spirited Violinist</div>
+      <div class="char-desc">นักไวโอลินที่เล่นด้วยความรู้สึก ไม่สนกติกา เธอคือสีสันในโลกสีเทาของ Kousei</div>
+    </div>
+    <div class="char-card char-tsubaki reveal reveal-delay-3">
+      <div class="char-avatar ca-warm">🌸</div>
+      <div class="char-name">Tsubaki Sawabe</div>
+      <div class="char-name-jp">澤部 椿</div>
+      <div class="char-role">Childhood Friend</div>
+      <div class="char-desc">เพื่อน幼馴染 ที่รัก Kousei มายาวนาน เธอรู้ว่าตัวเองรู้สึกอย่างไร แต่อาจสายเกินไปแล้ว</div>
+    </div>
+    <div class="char-card char-watari reveal reveal-delay-4">
+      <div class="char-avatar ca-green">⚽</div>
+      <div class="char-name">Ryota Watari</div>
+      <div class="char-name-jp">渡 亮太</div>
+      <div class="char-role">Soccer Star</div>
+      <div class="char-desc">นักฟุตบอลหน้าหล่อ เพื่อนสนิทของ Kousei ที่ไม่รู้ว่าตัวเองกำลังเป็นส่วนหนึ่งของเรื่องราวที่ซับซ้อน</div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS BAND -->
+<div class="stats-band">
+  <div class="stats-inner">
+    <div class="reveal">
+      <div class="stat-num">22<span>+</span></div>
+      <div class="stat-label">ตอน</div>
+    </div>
+    <div class="reveal reveal-delay-1">
+      <div class="stat-num">8<span>.</span>6</div>
+      <div class="stat-label">คะแนน MyAnimeList</div>
+    </div>
+    <div class="reveal reveal-delay-2">
+      <div class="stat-num">2014<span>–</span>15</div>
+      <div class="stat-label">ออกอากาศ</div>
+    </div>
+    <div class="reveal reveal-delay-3">
+      <div class="stat-num">∞</div>
+      <div class="stat-label">น้ำตาที่หลั่งไหล</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ MUSIC ══════ -->
+<div id="music">
+  <div class="music-inner">
+    <div class="reveal">
+      <div class="story-tag">// ดนตรีประกอบ</div>
+      <h2 class="section-title">บทเพลงที่<em>ก้องกังวาน</em></h2>
+      <p class="body-text" style="max-width:560px">เพลงประกอบโดย Masaru Yokoyama — บทเพลงคลาสสิกที่ถ่ายทอดความรู้สึกที่คำพูดไม่สามารถบอกได้</p>
+    </div>
+    <div class="playlist">
+      <div class="track reveal reveal-delay-1" onclick="setPlaying(this)">
+        <div class="track-num">01</div>
+        <div class="track-info">
+          <div class="track-title">Hikaru nara (光るなら)</div>
+          <div class="track-artist">Goose house</div>
+        </div>
+        <div class="track-bars"><div class="bar-anim"></div><div class="bar-anim"></div><div class="bar-anim"></div></div>
+        <span class="track-type type-op">Opening</span>
+      </div>
+      <div class="track reveal reveal-delay-1" onclick="setPlaying(this)">
+        <div class="track-num">02</div>
+        <div class="track-info">
+          <div class="track-title">Watashi no Uso (私の嘘)</div>
+          <div class="track-artist">Masaru Yokoyama</div>
+        </div>
+        <div class="track-bars"><div class="bar-anim"></div><div class="bar-anim"></div><div class="bar-anim"></div></div>
+        <span class="track-type type-ins">Instrumental</span>
+      </div>
+      <div class="track reveal reveal-delay-2" onclick="setPlaying(this)">
+        <div class="track-num">03</div>
+        <div class="track-info">
+          <div class="track-title">Natsukage (夏影)</div>
+          <div class="track-artist">Aioi Band</div>
+        </div>
+        <div class="track-bars"><div class="bar-anim"></div><div class="bar-anim"></div><div class="bar-anim"></div></div>
+        <span class="track-type type-ed">Ending</span>
+      </div>
+      <div class="track reveal reveal-delay-2" onclick="setPlaying(this)">
+        <div class="track-num">04</div>
+        <div class="track-info">
+          <div class="track-title">Chopin — Ballade No. 1</div>
+          <div class="track-artist">Frédéric Chopin</div>
+        </div>
+        <div class="track-bars"><div class="bar-anim"></div><div class="bar-anim"></div><div class="bar-anim"></div></div>
+        <span class="track-type type-ins">Classical</span>
+      </div>
+      <div class="track reveal reveal-delay-3" onclick="setPlaying(this)">
+        <div class="track-num">05</div>
+        <div class="track-info">
+          <div class="track-title">Kirameki (きらめき)</div>
+          <div class="track-artist">Masaru Yokoyama</div>
+        </div>
+        <div class="track-bars"><div class="bar-anim"></div><div class="bar-anim"></div><div class="bar-anim"></div></div>
+        <span class="track-type type-ins">Instrumental</span>
+      </div>
+      <div class="track reveal reveal-delay-3" onclick="setPlaying(this)">
+        <div class="track-num">06</div>
+        <div class="track-info">
+          <div class="track-title">Orange (オレンジ)</div>
+          <div class="track-artist">7!!</div>
+        </div>
+        <div class="track-bars"><div class="bar-anim"></div><div class="bar-anim"></div><div class="bar-anim"></div></div>
+        <span class="track-type type-ed">Ending 2</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ MOMENTS ══════ -->
+<section id="moments">
+  <div class="reveal">
+    <div class="story-tag">// ช่วงเวลา</div>
+    <h2 class="section-title">ฉากที่<em>ทำให้น้ำตาไหล</em></h2>
+  </div>
+  <div class="moments-grid">
+    <div class="moment reveal reveal-delay-1">
+      <div class="moment-box m1 moment-fill">🎹</div>
+      <div class="moment-overlay">
+        <div class="moment-episode">Episode 01</div>
+        <div class="moment-quote">"เธอทำให้โน้ตของฉันมีสี — ครั้งแรกในรอบหลายปี"</div>
+      </div>
+    </div>
+    <div class="moment reveal reveal-delay-2">
+      <div class="moment-box m2 moment-fill">🌸</div>
+      <div class="moment-overlay">
+        <div class="moment-episode">Episode 05</div>
+        <div class="moment-quote">"เล่นด้วยกันนะ ไม่ว่าจะเกิดอะไรขึ้น"</div>
+      </div>
+    </div>
+    <div class="moment reveal reveal-delay-3">
+      <div class="moment-box m3 moment-fill">🎻</div>
+      <div class="moment-overlay">
+        <div class="moment-episode">Episode 11</div>
+        <div class="moment-quote">"เธอแหกกฎทุกข้อ แต่มันสวยงามมาก"</div>
+      </div>
+    </div>
+    <div class="moment reveal">
+      <div class="moment-box m4 moment-fill">🌙</div>
+      <div class="moment-overlay">
+        <div class="moment-episode">Episode 18</div>
+        <div class="moment-quote">"ฉันโกหกเธอ แต่ความรู้สึกนั้นจริงทุกอย่าง"</div>
+      </div>
+    </div>
+    <div class="moment reveal reveal-delay-1">
+      <div class="moment-box m5 moment-fill">💌</div>
+      <div class="moment-overlay">
+        <div class="moment-episode">Episode 22</div>
+        <div class="moment-quote">"บทเพลงสุดท้ายนี้... ฉันเล่นเพื่อเธอ"</div>
+      </div>
+    </div>
+    <div class="moment reveal reveal-delay-2">
+      <div class="moment-box m6 moment-fill">🌅</div>
+      <div class="moment-overlay">
+        <div class="moment-episode">Finale</div>
+        <div class="moment-quote">"ขอบคุณที่ทำให้ฉันกลับมาเล่นดนตรีอีกครั้ง"</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECOND QUOTE -->
+<div class="quote-band">
+  <p class="quote-text">"คุณจะอยู่ในหัวใจฉันตลอดไป<br>เหมือนดั่งบทเพลงที่ไม่มีวันลืม"</p>
+  <p class="quote-src">— จดหมายของ Kaori</p>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div>
+      <div class="footer-brand">Your Lie in April</div>
+      <p class="footer-tagline">
+        อนิเมะที่สอนให้รู้ว่า ดนตรีไม่ใช่แค่เสียง —<br>
+        มันคือวิธีที่คนเราบอกความรู้สึกที่พูดออกมาไม่ได้
+      </p>
+    </div>
+    <div>
+      <div class="footer-section-title">หน้า</div>
+      <span class="footer-link" onclick="document.getElementById('story').scrollIntoView({behavior:'smooth'})">เรื่องราว</span>
+      <span class="footer-link" onclick="document.getElementById('watch').scrollIntoView({behavior:'smooth'})">ดูอนิเมะ</span>
+      <span class="footer-link" onclick="document.getElementById('characters').scrollIntoView({behavior:'smooth'})">ตัวละคร</span>
+      <span class="footer-link" onclick="document.getElementById('music').scrollIntoView({behavior:'smooth'})">ดนตรี</span>
+    </div>
+    <div>
+      <div class="footer-section-title">ข้อมูล</div>
+      <span class="footer-link">Studio: A-1 Pictures</span>
+      <span class="footer-link">Director: Kyohei Ishiguro</span>
+      <span class="footer-link">Manga: Naoshi Arakawa</span>
+      <span class="footer-link">Episodes: 22 ตอน</span>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2025 Your Lie in April Fan Site — ทำด้วยความรัก 🌸</span>
+    <span><span class="footer-sakura">🌸</span> A-1 Pictures / Naoshi Arakawa</span>
+  </div>
+</footer>
+
+<script>
+// ── CURSOR ──
+const cur = document.getElementById('cursor');
+const trail = document.getElementById('cursor-trail');
+let mx=0,my=0;
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cur.style.left = mx + 'px';
+  cur.style.top  = my + 'px';
+  setTimeout(() => {
+    trail.style.left = mx + 'px';
+    trail.style.top  = my + 'px';
+  }, 80);
+});
+document.querySelectorAll('a,button,.track,.char-card,.moment,.nav-link,.footer-link').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    cur.style.width = '28px'; cur.style.height = '28px';
+    cur.style.background = 'rgba(212,80,106,.12)';
+  });
+  el.addEventListener('mouseleave', () => {
+    cur.style.width = '14px'; cur.style.height = '14px';
+    cur.style.background = 'transparent';
+  });
+});
+
+// ── NAV SCROLL ──
+window.addEventListener('scroll', () => {
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 60);
+  revealCheck();
+});
+
+// ── SCROLL REVEAL ──
+function revealCheck() {
+  document.querySelectorAll('.reveal').forEach(el => {
+    if (el.getBoundingClientRect().top < window.innerHeight - 80)
+      el.classList.add('visible');
+  });
+}
+revealCheck();
+
+// ── PLAYLIST ──
+function setPlaying(el) {
+  document.querySelectorAll('.track').forEach(t => t.classList.remove('playing'));
+  el.classList.add('playing');
+}
+
+// ── PIANO (Web Audio API) ──
+let audioCtx = null;
+const freqs = [261.63,277.18,293.66,311.13,329.63,349.23,369.99,392,415.3,440,466.16,493.88];
+function playNote(el, idx) {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.type = 'triangle';
+  osc.frequency.value = freqs[idx] || 440;
+  gain.gain.setValueAtTime(.5, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(.001, audioCtx.currentTime + 1.2);
+  osc.start(); osc.stop(audioCtx.currentTime + 1.2);
+  el.style.background = el.classList.contains('key-black')
+    ? '#3d2d20' : 'rgba(255,183,197,.4)';
+  setTimeout(() => {
+    el.style.background = el.classList.contains('key-black')
+      ? '' : '';
+  }, 300);
+}
+
+// ── SMOOTH SCROLL (nav links) ──
+document.querySelectorAll('a.nav-link[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const t = document.querySelector(a.getAttribute('href'));
+    if (t) t.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+</script>
+</body>
+</html>
